@@ -77,5 +77,21 @@ public class JniEntrypoint {
 		}
 		stmt.execDirect(sql);
 	}
+	
+	public long getRowCount(long stmtId) {
+		OdbcStatementWrapper stmt = database.getStatement(stmtId);
+		if(stmt == null) {
+			throw new RuntimeException("statement not found "+ stmtId);
+		}
+		return stmt.getRowCount();
+	}
+	
+	public int getResultColumnCount(long stmtId) {
+		OdbcStatementWrapper stmt = database.getStatement(stmtId);
+		if(stmt == null) {
+			throw new RuntimeException("statement not found "+ stmtId);
+		}
+		return stmt.getResultColumnCount();
+	}
 
 }

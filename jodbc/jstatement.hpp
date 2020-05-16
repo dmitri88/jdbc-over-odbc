@@ -16,6 +16,8 @@ public:
 	RETCODE createStatement();
 	RETCODE freeStatement(SQLUSMALLINT option);
 	RETCODE execDirect(ustring sql);
+	RETCODE getRowCount(SQLLEN * retCount);
+	RETCODE getResultColumnCount(SQLSMALLINT * retCount);
 private:
 	JDatabase* connection;
 };

@@ -65,3 +65,37 @@ RETCODE JStatement::execDirect(ustring sql){
 	ret = java_callback(func1,this,sql);
 	return ret;
 }
+
+RETCODE JStatement::getRowCount(SQLLEN * retCount){
+	int ret;
+	std::function<int(JNIEnv*,JStatement* statement, SQLLEN * retCount)> func1;
+	func1 = [](JNIEnv *env,JStatement* statement, SQLLEN * retCount) {
+		jlong stmt = (long long)statement;
+		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "getRowCount", "(J)J");
+		*retCount = env->CallLongMethod(statement->connection->entrypointObj, method, stmt);
+		if(env->ExceptionCheck()){
+			LOG(1,"Error: JStatement::getRowCount");
+			return SQL_ERROR;
+		}
+		return SQL_SUCCESS;
+	};
+	ret = java_callback(func1,this,retCount);
+	return ret;
+}
+
+RETCODE JStatement::getResultColumnCount(SQLSMALLINT * retCount){
+	int ret;
+	std::function<int(JNIEnv*,JStatement* statement, SQLSMALLINT * retCount)> func1;
+	func1 = [](JNIEnv *env,JStatement* statement, SQLSMALLINT * retCount) {
+		jlong stmt = (long long)statement;
+		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "getResultColumnCount", "(J)I");
+		*retCount = env->CallLongMethod(statement->connection->entrypointObj, method, stmt);
+		if(env->ExceptionCheck()){
+			LOG(1,"Error: JStatement::getRowCount");
+			return SQL_ERROR;
+		}
+		return SQL_SUCCESS;
+	};
+	ret = java_callback(func1,this,retCount);
+	return ret;
+}

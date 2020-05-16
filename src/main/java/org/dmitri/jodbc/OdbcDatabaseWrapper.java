@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,6 +23,7 @@ public class OdbcDatabaseWrapper {
 	@Setter
 	private String driverclass;
 	
+	@Getter
 	private Connection connection;
 	private Map<Long,OdbcStatementWrapper> statements =  new HashMap<>();
 	
@@ -49,7 +51,7 @@ public class OdbcDatabaseWrapper {
 
 	public void createStatement(long stmtId) {
 		log.debug("JAVA createStatement "+stmtId);
-		statements.put(stmtId,new OdbcStatementWrapper(stmtId));
+		statements.put(stmtId,new OdbcStatementWrapper(this,stmtId));
 	}
 
 

@@ -509,7 +509,7 @@ SQLSetConnectAttrW(HDBC hdbc,
 
 	ret = conn->setConnectionAttr(fAttribute,rgbValue,cbValue);
 
-	LOG(5, "Entering SQLSetConnectAttrW %d (%p,%li,%p,%li)\n",ret,hdbc,fAttribute,rgbValue,cbValue);
+	LOG(5, "Exiting SQLSetConnectAttrW %d (%p,%li,%p,%li)\n",ret,hdbc,fAttribute,rgbValue,cbValue);
 	return ret;
 }
 
@@ -524,9 +524,37 @@ SQLTablesW(HSTMT StatementHandle,
 	return SQL_ERROR;
 }
 
+RETCODE	SQL_API SQLRowCount(HSTMT stmtHandle, SQLLEN * retCount){
+	RETCODE	ret;
+
+	LOG(5, "Entering SQLRowCount (%p)\n",stmtHandle);
+	if(!stmtHandle)
+		return SQL_INVALID_HANDLE;
+	JStatement* stmt = (JStatement*)stmtHandle;
+
+	ret = stmt->getRowCount(retCount);
+
+	LOG(5, "Exiting SQLRowCount %d (%p,%li)\n",ret,stmt,*retCount);
+	return ret;
+}
+
+RETCODE SQL_API SQLNumResultCols(HSTMT stmtHandle, SQLSMALLINT * retCount){
+	RETCODE	ret;
+
+	LOG(5, "Entering SQLNumResultCols (%p)\n",stmtHandle);
+	if(!stmtHandle)
+		return SQL_INVALID_HANDLE;
+	JStatement* stmt = (JStatement*)stmtHandle;
+
+	ret = stmt->getResultColumnCount(retCount);
+
+	LOG(5, "Exiting SQLNumResultCols %d (%p,%li)\n",ret,stmt,*retCount);
+	return ret;
+}
+
 RETCODE SQL_API
-SQLGetTypeInfoW(SQLHSTMT	StatementHandle,
-				SQLSMALLINT	DataType)
+SQLGetTypeInfoW(SQLHSTMT	stmt,
+				SQLSMALLINT	dataType)
 {
 	LOG(5, "Entering SQLGetTypeInfoW\n");
 	return SQL_ERROR;

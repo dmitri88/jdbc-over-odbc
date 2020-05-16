@@ -116,10 +116,20 @@ SQLHANDLE create_statement(SQLHANDLE hDbc){
 
 void test_queries(SQLHANDLE hStmt){
 	int ret;
+	SQLLEN retCount;
+	SQLSMALLINT colCount;
 
 	ustring sql = ustring(L"select count(*) from usys_system");
 	ret = SQLExecDirectW(hStmt, (SQLWCHAR*)sql.c_str(),sql.size());
 	assert(ret == 0);
+
+	ret = SQLRowCount(hStmt, &retCount);
+	assert(ret == 0);
+	assert(retCount == 1);
+	ret = SQLNumResultCols(hStmt, &colCount);
+	assert(ret == 0);
+	assert(colCount == 1);
+
 }
 
 int main(int argc, char **argv) {
