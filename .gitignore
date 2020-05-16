@@ -1,0 +1,17 @@
+/.cproject
+.libs
+.deps
+.project
+.settings
+config
+docs
+include
+installer
+winbuild
+*.a
+*.o
+/.gradle/
+/bin/
+/build/
+.classpath
+pg
