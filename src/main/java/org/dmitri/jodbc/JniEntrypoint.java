@@ -93,5 +93,13 @@ public class JniEntrypoint {
 		}
 		return stmt.getResultColumnCount();
 	}
+	
+	public Object[] describeColumn(long stmtId, int colNum) {
+		OdbcStatementWrapper stmt = database.getStatement(stmtId);
+		if(stmt == null) {
+			throw new RuntimeException("statement not found "+ stmtId);
+		}
+		return stmt.describeColumn(colNum);
+	}
 
 }

@@ -62,4 +62,22 @@ public class OdbcStatementWrapper {
 		return columnsNumber;
 	}
 
+	public Object[] describeColumn(int colNum) {
+		log.debug("JAVA describeColumn {} {}",statementId, colNum);
+		Object[] ret = new Object[6];
+		try {
+			ResultSetMetaData rsmd = result.getMetaData();
+			ret[0]=rsmd.getColumnName(colNum);
+			ret[1]=rsmd.getColumnLabel(colNum);
+			ret[2]=Integer.valueOf(rsmd.getColumnType(colNum));
+			ret[3] = Integer.valueOf(0); // colSize
+			ret[4] = Integer.valueOf(0); //decimalDigits
+			ret[5] = Integer.valueOf(rsmd.isNullable(colNum));
+			
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+		return ret;
+	}
+
 }

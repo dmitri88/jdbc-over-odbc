@@ -130,6 +130,16 @@ void test_queries(SQLHANDLE hStmt){
 	assert(ret == 0);
 	assert(colCount == 1);
 
+	SQLWCHAR colName[1024];
+	SQLSMALLINT bufLength;
+	SQLSMALLINT nameLength;
+	SQLSMALLINT dataType;
+	SQLULEN colSize;
+	SQLSMALLINT decimalDigits;
+	SQLSMALLINT nullable;
+	ret = SQLDescribeColW(hStmt, 1, colName, 1024, &nameLength, &dataType, &colSize, &decimalDigits, &nullable);
+	assert(ret == 0);
+
 }
 
 int main(int argc, char **argv) {

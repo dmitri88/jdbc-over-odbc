@@ -18,6 +18,7 @@ public:
 	RETCODE execDirect(ustring sql);
 	RETCODE getRowCount(SQLLEN * retCount);
 	RETCODE getResultColumnCount(SQLSMALLINT * retCount);
+	RETCODE describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSMALLINT bufLength, SQLSMALLINT *nameLength, SQLSMALLINT * dataType, SQLULEN * colSize, SQLSMALLINT * decimalDigits, SQLSMALLINT * nullable);
 private:
 	JDatabase* connection;
 };

@@ -78,3 +78,19 @@ JavaVM* start_vm(){
 return ret.get();
 }
 
+std::string from_jstring(JNIEnv *env,jstring jstr){
+    const char *cstr = env->GetStringUTFChars(jstr, NULL);
+    std::string str = std::string(cstr);
+    env->ReleaseStringUTFChars(jstr, cstr);
+    return str;
+}
+
+jint jinteger_to_jint(JNIEnv *env,jobject intObj){
+	jclass clz = env->FindClass("java/lang/Integer");
+	jmethodID method = env->GetMethodID(clz, "intValue", "()I");
+	//char* data = (char*)intObj;
+	//for(int i=0;i<24;i++)
+	//	printf("cc:%d\n",data[i]);
+	return env->CallIntMethod(intObj, method);
+}
+

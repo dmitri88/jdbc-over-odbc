@@ -82,6 +82,21 @@ SQLConnectW(HDBC ConnectionHandle,
 
 }
 
+RETCODE SQL_API SQLDescribeColW(HSTMT hstm, SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSMALLINT bufLength,
+		SQLSMALLINT *nameLength, SQLSMALLINT * dataType, SQLULEN * colSize, SQLSMALLINT * decimalDigits, SQLSMALLINT * nullable){
+	RETCODE	ret;
+
+	LOG(5, "Entering SQLDescribeColW (%p,%d,%d)\n",hstm,colnum,bufLength);
+	if(!hstm)
+		return SQL_INVALID_HANDLE;
+	JStatement* stmt = (JStatement*)hstm;
+
+	ret = stmt->describeColumn(colnum, colName, bufLength, nameLength, dataType, colSize, decimalDigits , nullable);
+
+	LOG(5, "Exiting SQLDescribeColW %d (%p,%d,%d,%s,%d,%d,%d,%d,%d)\n",ret,hstm,colnum,bufLength,unicode_to_utf8(colName),*nameLength,*dataType,*colSize,*decimalDigits,*nullable);
+	return ret;
+}
+
 RETCODE	SQL_API SQLDisconnect(HDBC ConnectionHandle){
 	LOG(5, "Entering SQLDisconnect %p\n",ConnectionHandle);
 	return SQL_SUCCESS;
@@ -548,7 +563,7 @@ RETCODE SQL_API SQLNumResultCols(HSTMT stmtHandle, SQLSMALLINT * retCount){
 
 	ret = stmt->getResultColumnCount(retCount);
 
-	LOG(5, "Exiting SQLNumResultCols %d (%p,%li)\n",ret,stmt,*retCount);
+	LOG(5, "Exiting SQLNumResultCols %d (%p,%i)\n",ret,stmt,*retCount);
 	return ret;
 }
 

@@ -18,6 +18,8 @@ extern JavaVM* start_vm();
 extern JavaVM* globalJvm;
 
 #define to_jstring(str) env->NewStringUTF(str.utf8().c_str())
+extern std::string from_jstring(JNIEnv *env, jstring jstr);
+extern jint jinteger_to_jint(JNIEnv *env, jobject intObj);
 
 
 template<typename... Types> int java_callback(const std::function<int(JNIEnv*,Types... )>& func,Types... arg1){

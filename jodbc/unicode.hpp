@@ -32,6 +32,7 @@ public:
 	ustring(const SQLWCHAR *wstr): std::basic_string<SQLWCHAR>( wstr ) { }
 	ustring(const SQLWCHAR *wstr,int len): std::basic_string<SQLWCHAR>( wstr ) { }
     ustring(const wchar_t *wstr): std::basic_string<SQLWCHAR>(convert(wstr) ) { }
+    ustring(std::string utf8): std::basic_string<SQLWCHAR>(convert_utf8(utf8).c_str() ) { }
 
     std::string utf8(){
     	int buf_len=this->size()*4 +1;
@@ -41,6 +42,12 @@ public:
     }
 
 private:
+    ustring convert_utf8(std::string utf8){
+    	int len = utf8.size();
+    	SQLWCHAR buf[len+1];
+    	utf8_to_ucs2_lf(utf8.c_str(),len,FALSE,buf,len+1,FALSE);
+    	return ustring(buf);
+    }
     ustring convert(const wchar_t* wstr){
     	SQLWCHAR null_str[1] = {0};
 		if(wstr == NULL)
@@ -61,7 +68,7 @@ private:
 };
 
 //debug functions
-#define unicode_to_utf8(str) ustring(str).utf8().c_str()
+#define unicode_to_utf8(str) (str!=NULL?ustring(str).utf8().c_str():"")
 #define utf8_to_unicode(str) utf8_to_ucs2_s(str, -1, NULL, -1)
 
 

@@ -1,0 +1,47 @@
+package org.dmitri.jodbc.enums;
+
+public enum OdbcDataType {
+	
+	SQL_CHAR(1),
+	SQL_VARCHAR(12),
+	SQL_LONGVARCHAR(-1),
+	SQL_WCHAR(-8),
+	SQL_WVARCHAR(-9),
+	SQL_WLONGVARCHAR(-10),
+	SQL_DECIMAL(3),
+	SQL_NUMERIC(2),
+	SQL_SMALLINT(5),
+	SQL_INTEGER(4),
+	SQL_REAL(7),
+	SQL_FLOAT(6),
+	SQL_DOUBLE(8),
+	SQL_BIT(-7),
+	SQL_TINYINT(-6),
+	SQL_BIGINT(-5),
+	SQL_BINARY(-2),
+	SQL_VARBINARY(-3),
+	SQL_LONGVARBINARY(-4),
+	SQL_TYPE_DATE(91),
+	SQL_TYPE_TIME(92),
+	SQL_TYPE_TIMESTAMP(93),
+//	SQL_TYPE_UTCDATETIME	UTCDATETIME	Year, month, day, hour, minute, second, utchour, and utcminute fields. The utchour and utcminute fields have 1/10 microsecond precision.
+//	SQL_TYPE_UTCTIME	UTCTIME	Hour, minute, second, utchour, and utcminute fields. The utchour and utcminute fields have 1/10 microsecond precision..
+	SQL_INTERVAL_MONTH(102),
+	SQL_INTERVAL_YEAR(101),
+	SQL_INTERVAL_YEAR_TO_MONTH(107),
+	SQL_INTERVAL_DAY(103),
+	SQL_INTERVAL_HOUR(104),
+	SQL_INTERVAL_MINUTE(105),
+	SQL_INTERVAL_SECOND(106),
+	SQL_INTERVAL_DAY_TO_HOUR(108),
+	SQL_INTERVAL_DAY_TO_MINUTE(109),
+	SQL_INTERVAL_DAY_TO_SECOND(110),
+	SQL_INTERVAL_HOUR_TO_MINUTE(111),
+	SQL_INTERVAL_HOUR_TO_SECOND(112),
+	SQL_INTERVAL_MINUTE_TO_SECOND(113),
+	SQL_GUID(-11);
+;
+	private OdbcDataType(int num) {
+		
+	}
+}
