@@ -139,6 +139,20 @@ void test_queries(SQLHANDLE hStmt){
 	SQLSMALLINT nullable;
 	ret = SQLDescribeColW(hStmt, 1, colName, 1024, &nameLength, &dataType, &colSize, &decimalDigits, &nullable);
 	assert(ret == 0);
+	assert(dataType == 4);
+
+	char data[1024];
+	SQLINTEGER numberValue;
+	ret = SQLColAttributeW(hStmt, 1, 18, data, 1024, &bufLength, &numberValue);
+	assert(ret == 0);
+
+	ret = SQLColAttributeW(hStmt, 1, 3, data, 1024, &bufLength, &numberValue);
+	assert(ret == 0);
+	assert(numberValue == 11);
+
+	ret = SQLColAttributeW(hStmt, 1, 8, data, 1024, &bufLength, &numberValue);
+	assert(ret == 0);
+
 
 }
 

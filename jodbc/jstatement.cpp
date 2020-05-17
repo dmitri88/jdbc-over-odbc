@@ -151,3 +151,63 @@ RETCODE JStatement::describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSM
 	ret = java_callback(func1,this,colnum,colName,bufLength,nameLength,dataType, colSize, decimalDigits, nullable);
 	return ret;
 }
+
+RETCODE getColumnAttribute_18(JNIEnv* env, jobjectArray data, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLLEN *numberValue){
+	if(rgbDesc != NULL){
+		jstring val=(jstring) env->GetObjectArrayElement(data, 0);
+		ustring wcharData = ustring(from_jstring(env,val));
+		if(wcharData.size()>cbDescMax){
+			return SQL_ERROR;
+		}
+		memcpy(rgbDesc,wcharData.c_str(),(wcharData.size()+1)* sizeof(SQLWCHAR));
+		*pcbDesc = wcharData.size()* sizeof(SQLWCHAR);
+
+	}
+	if(numberValue!= NULL){
+		*numberValue = 0;
+	}
+	return SQL_SUCCESS;
+}
+
+RETCODE getColumnAttribute_3(JNIEnv* env, jobjectArray data, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLLEN * numberValue){
+	if(numberValue == NULL)
+		return SQL_ERROR;
+	jobject val=(jobject) env->GetObjectArrayElement(data, 0);
+	*numberValue = jlong_to_long(env,val);
+	return SQL_SUCCESS;
+}
+
+
+RETCODE JStatement::getColumnAttribute(SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLLEN *numberValue){
+	int ret;
+	std::function<int(JNIEnv* env,JStatement* statement, SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLLEN *numberValue)> func1;
+	func1 = [](JNIEnv *env,JStatement* statement, SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLLEN *numberValue) {
+		int ret = SQL_SUCCESS;
+		jobject val;
+		jlong stmt = (long long)statement;
+		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "getColumnAttribute", "(JII)[Ljava/lang/Object;");
+		jobjectArray data = (jobjectArray)env->CallObjectMethod(statement->connection->entrypointObj, method, stmt,icol,fDescType);
+		if(env->ExceptionCheck()){
+			env->ExceptionDescribe();
+			LOG(1,"Error: JStatement::getColumnAttribute");
+			return SQL_ERROR;
+		}
+		switch(fDescType){
+		case SQL_COLUMN_LABEL://label
+			ret = getColumnAttribute_18(env,data,rgbDesc,cbDescMax,pcbDesc, numberValue);
+			break;
+		case SQL_COLUMN_UPDATABLE:
+		case SQL_COLUMN_LENGTH://col size
+		case SQL_COLUMN_UNSIGNED://unsigned
+			ret = getColumnAttribute_3(env,data,rgbDesc,cbDescMax,pcbDesc, numberValue);
+			break;
+		default:
+			ret = SQL_ERROR;
+		}
+		return ret;
+	};
+	ret = java_callback(func1,this,icol,fDescType,rgbDesc,cbDescMax,pcbDesc, numberValue);
+	return ret;
+}
+
+

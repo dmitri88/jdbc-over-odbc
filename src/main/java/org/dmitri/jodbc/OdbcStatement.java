@@ -5,14 +5,17 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
+import org.dmitri.jodbc.dto.DataTypeInfo;
+import org.dmitri.jodbc.enums.OdbcColumnAttribute;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
-public class OdbcStatementWrapper {
+public class OdbcStatement {
 	
-	private final OdbcDatabaseWrapper database;
+	private final OdbcDatabase database;
 	private final long statementId;
 	
 	private PreparedStatement statement;
@@ -78,6 +81,66 @@ public class OdbcStatementWrapper {
 			throw new RuntimeException(e);
 		}
 		return ret;
+	}
+	
+	public Object[]  getColumnAttribute(int colNum,int descType) {
+		log.debug("JAVA getColumnAttribute {} {} {}",statementId, colNum, descType);
+		OdbcColumnAttribute attr = OdbcColumnAttribute.valueOf(descType);
+		switch (attr) {
+		case SQL_COLUMN_UNSIGNED:
+			return getColumnAttributeByUnsigned(colNum);
+		case SQL_COLUMN_LENGTH:
+			return getColumnAttributeByLength(colNum);
+		case SQL_COLUMN_UPDATABLE:
+			return getColumnAttributeByUpdatable(colNum);
+		case SQL_COLUMN_LABEL:
+			return getColumnAttributeByLabel(colNum);
+		default:
+			throw new RuntimeException("undefined attr: "+attr);
+		}
+		//return null;
+	}
+	
+	
+	private Object[] getColumnAttributeByUpdatable(int colNum) {
+		Object[] ret = new Object[1];
+			ret[0]=Long.valueOf(0);
+		return ret;	
+	}
+
+	private Object[] getColumnAttributeByUnsigned(int colNum) {
+		Object[] ret = new Object[1];
+		try {
+			ResultSetMetaData rsmd = result.getMetaData();
+			int typeid = rsmd.getColumnType(colNum);
+			DataTypeInfo typeInfo = this.database.getTypeInfo(typeid);
+			ret[0]=Long.valueOf(typeInfo.isUnsigned()?1:0);
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+		return ret;	
+	}
+
+	private Object[] getColumnAttributeByLength(int colNum) {
+		Object[] ret = new Object[1];
+		try {
+			ResultSetMetaData rsmd = result.getMetaData();
+			ret[0]=Long.valueOf(rsmd.getColumnDisplaySize(colNum));
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+		return ret;	
+	}
+
+	private Object[]  getColumnAttributeByLabel(int colNum) {
+		Object[] ret = new Object[1];
+		try {
+			ResultSetMetaData rsmd = result.getMetaData();
+			ret[0]=rsmd.getColumnLabel(colNum);
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+		return ret;	
 	}
 
 }

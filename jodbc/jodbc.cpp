@@ -61,6 +61,18 @@ RETCODE SQL_API SQLAllocHandle(SQLSMALLINT handleType, SQLHANDLE parentHandle, S
 	LOG(5, "Exiting SQLAllocHandle (%hi) %hi %p %p %p\n",ret,handleType,parentHandle,outputHandle,*outputHandle);
 	return ret;
 }
+
+RETCODE SQL_API SQLColAttributeW(HSTMT hstmt,SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLLEN *pfDesc){
+	int ret;
+	LOG(5, "Entering SQLColAttributeW (%p,%d,%d)\n",hstmt,icol,fDescType);
+	if(hstmt == NULL )
+		return SQL_INVALID_HANDLE;
+	JStatement* stmt = (JStatement*)hstmt;
+	ret = stmt->getColumnAttribute(icol,fDescType,rgbDesc,cbDescMax,pcbDesc,pfDesc);
+	LOG(5, "Exiting SQLColAttributeW %d (%p,%d,%d)\n",ret,hstmt,icol,fDescType);
+	return ret;
+}
+
 RETCODE  SQL_API
 SQLColumnsW(HSTMT StatementHandle,
 			SQLWCHAR *CatalogName, SQLSMALLINT NameLength1,

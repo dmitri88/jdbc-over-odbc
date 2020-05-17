@@ -11,10 +11,10 @@ import ch.qos.logback.classic.Level;
 
 public class JniEntrypoint {
 	
-	private OdbcDatabaseWrapper database;
+	private OdbcDatabase database;
 	
 	private JniEntrypoint() {
-		database = new OdbcDatabaseWrapper();
+		database = new OdbcDatabase();
 	}
 	
 	public static JniEntrypoint getInstance() {
@@ -38,7 +38,7 @@ public class JniEntrypoint {
 		String propSetter = prop.substring(0,1).toUpperCase()+prop.substring(1);
 		Method method;
 		try {
-			method = OdbcDatabaseWrapper.class.getMethod("set"+propSetter, new Class<?>[]{String.class});
+			method = OdbcDatabase.class.getMethod("set"+propSetter, new Class<?>[]{String.class});
 		} catch (NoSuchMethodException | SecurityException e) {
 			return;
 		}
@@ -54,7 +54,7 @@ public class JniEntrypoint {
 	}
 	
 	public void freeStatement(long stmtId, long option) {
-		OdbcStatementWrapper stmt = database.getStatement(stmtId);
+		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
@@ -71,7 +71,7 @@ public class JniEntrypoint {
 	}
 	
 	public void execDirect(long stmtId,String sql) {
-		OdbcStatementWrapper stmt = database.getStatement(stmtId);
+		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
@@ -79,7 +79,7 @@ public class JniEntrypoint {
 	}
 	
 	public long getRowCount(long stmtId) {
-		OdbcStatementWrapper stmt = database.getStatement(stmtId);
+		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
@@ -87,7 +87,7 @@ public class JniEntrypoint {
 	}
 	
 	public int getResultColumnCount(long stmtId) {
-		OdbcStatementWrapper stmt = database.getStatement(stmtId);
+		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
@@ -95,11 +95,19 @@ public class JniEntrypoint {
 	}
 	
 	public Object[] describeColumn(long stmtId, int colNum) {
-		OdbcStatementWrapper stmt = database.getStatement(stmtId);
+		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
 		return stmt.describeColumn(colNum);
+	}
+	
+	public Object[]  getColumnAttribute(long stmtId, int colNum,int descType) {
+		OdbcStatement stmt = database.getStatement(stmtId);
+		if(stmt == null) {
+			throw new RuntimeException("statement not found "+ stmtId);
+		}
+		return stmt.getColumnAttribute(colNum,descType);
 	}
 
 }

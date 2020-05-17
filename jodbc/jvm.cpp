@@ -88,9 +88,11 @@ std::string from_jstring(JNIEnv *env,jstring jstr){
 jint jinteger_to_jint(JNIEnv *env,jobject intObj){
 	jclass clz = env->FindClass("java/lang/Integer");
 	jmethodID method = env->GetMethodID(clz, "intValue", "()I");
-	//char* data = (char*)intObj;
-	//for(int i=0;i<24;i++)
-	//	printf("cc:%d\n",data[i]);
 	return env->CallIntMethod(intObj, method);
 }
 
+jlong jlong_to_long(JNIEnv *env, jobject longObj){
+	jclass clz = env->FindClass("java/lang/Long");
+	jmethodID method = env->GetMethodID(clz, "longValue", "()J");
+	return env->CallLongMethod(longObj, method);
+}

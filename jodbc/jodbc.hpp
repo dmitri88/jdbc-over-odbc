@@ -7,6 +7,7 @@
 #include <stdarg.h>
 
 extern "C" RETCODE SQL_API SQLAllocHandle(SQLSMALLINT HandleType, SQLHANDLE InputHandle, SQLHANDLE * OutputHandle);
+extern "C" RETCODE SQL_API SQLColAttributeW(HSTMT hstmt,SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLLEN *pfDesc);
 extern "C" RETCODE SQL_API SQLColumnsW(HSTMT hstm, SQLWCHAR *CatalogName, SQLSMALLINT NameLength1, SQLWCHAR *SchemaName, SQLSMALLINT NameLength2, SQLWCHAR *TableName, SQLSMALLINT NameLength3, SQLWCHAR *ColumnName, SQLSMALLINT NameLength4);
 extern "C" RETCODE SQL_API SQLConnectW(HDBC hdbc, SQLWCHAR *ServerName, SQLSMALLINT NameLength1, SQLWCHAR *UserName, SQLSMALLINT NameLength2, SQLWCHAR *Authentication, SQLSMALLINT NameLength3);
 extern "C" RETCODE SQL_API SQLDescribeColW(HSTMT hstm, SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSMALLINT bufLength, SQLSMALLINT *nameLength, SQLSMALLINT * dataType, SQLULEN * colSize, SQLSMALLINT * decimalDigits, SQLSMALLINT * nullable);
