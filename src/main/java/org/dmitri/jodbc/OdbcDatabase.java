@@ -5,10 +5,15 @@ import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.management.RuntimeErrorException;
+
 import org.dmitri.jodbc.dto.DataTypeInfo;
+import org.dmitri.jodbc.enums.OdbcConnectionAttribute;
+import org.dmitri.jodbc.enums.OdbcInfoType;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -84,7 +89,6 @@ public class OdbcDatabase {
 
 
 	public OdbcStatement getStatement(long stmtId) {
-		log.debug("JAVA getStatement "+stmtId);
 		if(stmtId == 0) {
 			return null;
 		}
@@ -98,9 +102,81 @@ public class OdbcDatabase {
 	}
 
 
-	public void getConnectionAttribute(long attr, long cbMax) {
-		log.debug("JAVA getConnectionAttribute {} {}",attr,cbMax);
+	public Object[] getConnectionAttribute(long attrLong) {
+		OdbcConnectionAttribute attr = OdbcConnectionAttribute.valueOf((int)attrLong);
+		log.debug("JAVA getConnectionAttribute {} ", attr!=null?attr:attrLong);
 		
+		if(attr==null) {
+			return new Object[0];
+		}
+		
+		Object[] ret;
+		ret = new Object[1];
+		
+		switch (attr) {
+		case SQL_CURRENT_QUALIFIER:
+			ret[0] = getCurrentCatalog();
+			break;
+
+		default:
+			return new Object[0];
+		}  	
+		return ret;			
+	}
+	private String getCurrentCatalog() {
+		Statement statement = null;
+		ResultSet resultSet = null;
+		try {
+			statement = this.connection.createStatement();
+			resultSet = statement.executeQuery("SELECT DB_NAME()");
+			if(resultSet.next()) {
+				return resultSet.getString(1);
+			}
+		
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}	finally {
+			if(resultSet != null)
+				try {
+					resultSet.close();
+				} catch (SQLException e) {
+				}
+			if(statement != null)
+				try {
+					statement.close();
+				} catch (SQLException e) {
+				}			
+		}
+		return null;
+	}
+	public Object[] getInfo(int fieldId) {
+		OdbcInfoType attr = OdbcInfoType.valueOf(fieldId);
+		log.debug("JAVA getInfo {} ", attr!=null?attr:fieldId);
+		
+		
+		Object[] ret;
+		ret = new Object[1];
+		
+		switch (attr) {
+		case SQL_ODBC_VER:
+			ret[0] = "03.80.0000";
+			break;
+		case SQL_DRIVER_ODBC_VER:
+			ret[0] = "03.80";
+			break;
+		case SQL_DBMS_NAME:
+			try {
+				DatabaseMetaData metaData = this.connection.getMetaData();
+				ret[0] = metaData.getDatabaseProductName();
+			} catch (SQLException e) {
+				throw new RuntimeException(e);
+			}
+			break;
+
+		default:
+			throw new RuntimeException("getInfo missing field "+(attr!=null?attr:fieldId));
+		}  	
+		return ret;
 	}
 
 }

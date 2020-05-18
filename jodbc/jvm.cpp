@@ -7,6 +7,7 @@
 
 #include <thread>
 #include <future>
+#include <string.h>
 #include <odbcinst.h>
 #include "jodbc.hpp"
 #include "jvm.hpp"
@@ -95,4 +96,20 @@ jlong jlong_to_long(JNIEnv *env, jobject longObj){
 	jclass clz = env->FindClass("java/lang/Long");
 	jmethodID method = env->GetMethodID(clz, "longValue", "()J");
 	return env->CallLongMethod(longObj, method);
+}
+
+int jarrayToString(JNIEnv *env, jobjectArray data, int pos, PTR pointer, SQLINTEGER maxSize,SQLINTEGER *retSize){
+	if(pointer == NULL)
+		return SQL_ERROR;
+	jstring val=(jstring) env->GetObjectArrayElement(data, pos);
+	ustring wcharData = ustring(from_jstring(env,val));
+	if(wcharData.size()>maxSize){
+		return SQL_ERROR;
+	}
+	memcpy(pointer,wcharData.c_str(),(wcharData.size()+1)* sizeof(SQLWCHAR));
+	*(((SQLWCHAR*)pointer)+wcharData.size())=0;
+	if(retSize!= NULL){
+		*retSize = sizeof(SQLWCHAR)*wcharData.size();
+	}
+	return SQL_SUCCESS;
 }

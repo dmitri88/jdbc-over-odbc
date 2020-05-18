@@ -22,16 +22,13 @@ extern std::string from_jstring(JNIEnv *env, jstring jstr);
 extern jint jinteger_to_jint(JNIEnv *env, jobject intObj);
 extern jlong jlong_to_long(JNIEnv *env, jobject longObj);
 
+extern int jarrayToString(JNIEnv *env, jobjectArray array, int pos, PTR pointer, SQLINTEGER maxSize,SQLINTEGER *retSize);
+
 
 template<typename... Types> int java_callback(const std::function<int(JNIEnv*,Types... )>& func,Types... arg1){
 	if(globalJvm == NULL)
 		return SQL_ERROR;
 	JavaVMAttachArgs __jvm_args = {JNI_VERSION_10, 0, 0};
-	//LOG(5,"jvm_call IN\n");
-	//static thread_local JNIEnv* env = nullptr;
-	//if (env == nullptr){
-	//	printf("aaaaaaaaaaaaaaaaaa");
-	//}
 
 	auto future = async(std::launch::async, [](const std::function<int(JNIEnv*,Types... )>& func,Types... arg2){
 			//LOG(5,"jvm_call INSIDE\n");

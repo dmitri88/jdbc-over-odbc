@@ -95,7 +95,7 @@ SQLConnectW(HDBC ConnectionHandle,
 }
 
 RETCODE SQL_API SQLDescribeColW(HSTMT hstm, SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSMALLINT bufLength,
-		SQLSMALLINT *nameLength, SQLSMALLINT * dataType, SQLULEN * colSize, SQLSMALLINT * decimalDigits, SQLSMALLINT * nullable){
+		SQLSMALLINT *nameLength, SQLSMALLINT * dataType, SQLUINTEGER * colSize, SQLSMALLINT * decimalDigits, SQLSMALLINT * nullable){
 	RETCODE	ret;
 
 	LOG(5, "Entering SQLDescribeColW (%p,%d,%d)\n",hstm,colnum,bufLength);
@@ -105,7 +105,7 @@ RETCODE SQL_API SQLDescribeColW(HSTMT hstm, SQLUSMALLINT colnum, SQLWCHAR *colNa
 
 	ret = stmt->describeColumn(colnum, colName, bufLength, nameLength, dataType, colSize, decimalDigits , nullable);
 
-	LOG(5, "Exiting SQLDescribeColW %d (%p,%d,%d,%s,%d,%d,%d,%d,%d)\n",ret,hstm,colnum,bufLength,unicode_to_utf8(colName),*nameLength,*dataType,*colSize,*decimalDigits,*nullable);
+	LOG(5, "Exiting SQLDescribeColW %d (%p,%d,%d,%s,%d,%d,%lu,%d,%d)\n",ret,hstm,colnum,bufLength,unicode_to_utf8(colName),*nameLength,*dataType,*colSize,*decimalDigits,*nullable);
 	return ret;
 }
 
@@ -299,20 +299,30 @@ SQLGetDiagRecW(SQLSMALLINT fHandleType,
 	return SQL_SUCCESS;
 }
 
-RETCODE  SQL_API
-SQLGetInfoW(HDBC ConnectionHandle,
-			  SQLUSMALLINT fInfoType,
-			  PTR rgbInfoValue,
-			  SQLSMALLINT cbInfoValueMax,
-			  SQLSMALLINT * pcbInfoValue){
+RETCODE  SQL_API SQLGetInfoW(HDBC hdbc,SQLUSMALLINT fInfoType, PTR rgbInfoValue, SQLSMALLINT cbInfoValueMax, SQLSMALLINT * pcbInfoValue){
 	char		data[1000];
 	const char   *p = NULL;
-	SQLULEN			len = 0;
-	SQLULEN			value = 0;
+	SQLUINTEGER			len = 0;
+	SQLUINTEGER			value = 0;
 	RETCODE		ret = SQL_ERROR;
 
-	LOG(5, "Entering SQLGetInfoW %p,%hhi,%p,%hi\n",ConnectionHandle,fInfoType,rgbInfoValue,cbInfoValueMax);
+	LOG(5, "Entering SQLGetInfoW %p,%hhi,%p,%hi\n",hdbc,fInfoType,rgbInfoValue,cbInfoValueMax);
+	if(!hdbc)
+		return SQL_INVALID_HANDLE;
+	JDatabase* database = (JDatabase*)hdbc;
+
+	//try java version
+	ret = database->getInfo(fInfoType, rgbInfoValue, cbInfoValueMax, pcbInfoValue);
+	if(ret == SQL_SUCCESS){
+		LOG(5, "Exiting SQLGetInfoW %d (%p,%hhi,%p,%hi,%d)\n",ret,hdbc,fInfoType,rgbInfoValue,cbInfoValueMax,*pcbInfoValue);
+		return ret;
+	}
+	//local fallback
 	switch(fInfoType){
+		//case SQL_DBMS_NAME:
+		//	SPRINTF_FIXED(data, "Microsoft SQL Server");
+		//	p = data;
+		//	break;
 		case SQL_DRIVER_NAME:	/* ODBC 1.0 */
 			p = "jodbc";
 			break;
@@ -497,7 +507,7 @@ SQLGetInfoW(HDBC ConnectionHandle,
 	if (pcbInfoValue)
 		*pcbInfoValue = (SQLSMALLINT) len;
 
-
+	LOG(5, "Exiting SQLGetInfoW %d (%p,%hhi,%p,%hi)\n",ret,hdbc,fInfoType,rgbInfoValue,cbInfoValueMax);
 	return SQL_SUCCESS;
 }
 
@@ -539,6 +549,34 @@ SQLSetConnectAttrW(HDBC hdbc,
 	LOG(5, "Exiting SQLSetConnectAttrW %d (%p,%li,%p,%li)\n",ret,hdbc,fAttribute,rgbValue,cbValue);
 	return ret;
 }
+
+RETCODE SQL_API SQLGetStmtAttrW(SQLHSTMT hstmt, SQLINTEGER	fAttribute, PTR		rgbValue, SQLINTEGER	cbValueMax, SQLINTEGER	*numValue){
+	RETCODE	ret;
+
+	LOG(5, "Entering SQLGetStmtAttrW (%p,%li,%p,%li,%p)\n",hstmt,fAttribute,rgbValue,cbValueMax,numValue);
+	if(!hstmt)
+		return SQL_INVALID_HANDLE;
+	JStatement* stmt = (JStatement*)hstmt;
+
+	ret = stmt->getStatementAttr(fAttribute,rgbValue,cbValueMax,numValue);
+
+	LOG(5, "Exiting SQLGetStmtAttrW %d (%p,%li,%p,%li,%p)\n",ret,hstmt,fAttribute,rgbValue,cbValueMax,numValue);
+	return ret;
+}
+
+RETCODE SQL_API SQLSetStmtAttrW(SQLHSTMT hstmt, SQLINTEGER	fAttribute, PTR		rgbValue, SQLINTEGER	cbValueMax){
+	RETCODE	ret;
+	LOG(5, "Entering SQLSetStmtAttrW (%p,%li,%p,%li)\n",hstmt,fAttribute,rgbValue,cbValueMax);
+	if(!hstmt)
+		return SQL_INVALID_HANDLE;
+	JStatement* stmt = (JStatement*)hstmt;
+
+	ret = stmt->setStatementAttr(fAttribute,rgbValue,cbValueMax);
+
+	LOG(5, "Exiting SQLSetStmtAttrW %d (%p,%li,%p,%li)\n",ret,hstmt,fAttribute,rgbValue,cbValueMax);
+	return ret;
+}
+
 
 RETCODE		SQL_API
 SQLTablesW(HSTMT StatementHandle,

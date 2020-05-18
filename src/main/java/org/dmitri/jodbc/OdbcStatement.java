@@ -7,6 +7,7 @@ import java.sql.SQLException;
 
 import org.dmitri.jodbc.dto.DataTypeInfo;
 import org.dmitri.jodbc.enums.OdbcColumnAttribute;
+import org.dmitri.jodbc.enums.OdbcStatementAttribute;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -84,8 +85,8 @@ public class OdbcStatement {
 	}
 	
 	public Object[]  getColumnAttribute(int colNum,int descType) {
-		log.debug("JAVA getColumnAttribute {} {} {}",statementId, colNum, descType);
 		OdbcColumnAttribute attr = OdbcColumnAttribute.valueOf(descType);
+		log.debug("JAVA getColumnAttribute {} {} {}",statementId, colNum, attr!=null?attr:descType);
 		switch (attr) {
 		case SQL_COLUMN_UNSIGNED:
 			return getColumnAttributeByUnsigned(colNum);
@@ -141,6 +142,24 @@ public class OdbcStatement {
 			throw new RuntimeException(e);
 		}
 		return ret;	
+	}
+
+	public Object[] getStatementAttribute(int attrInt) {
+		OdbcStatementAttribute attr = OdbcStatementAttribute.valueOf(attrInt);
+		log.debug("JAVA getStatementAttribute {} {}",statementId, attr!=null?attr:attrInt);
+		switch(attr) {
+		case SQL_CURSOR_TYPE:
+		case SQL_CONCURRENCY:
+			return new Object[] { Long.valueOf(0)};
+		default:
+				return null;
+		}
+	}
+
+	public void setStatementAttribute(int attrInt, long data) {
+		OdbcStatementAttribute attr = OdbcStatementAttribute.valueOf(attrInt);
+		log.debug("JAVA setStatementAttribute {} {} {}",statementId, attr!=null?attr:attrInt,data);
+		
 	}
 
 }

@@ -20,6 +20,7 @@ public:
 	RETCODE setConnectionParameter(ustring prop, ustring val);
 	RETCODE getConnectionAttr(SQLINTEGER fAttribute, SQLPOINTER rgbValue, SQLINTEGER cbValueMax, SQLINTEGER *pcbValue);
 	RETCODE setConnectionAttr(SQLINTEGER fAttribute, PTR rgbValue, SQLINTEGER	cbValue);
+	RETCODE getInfo(SQLUSMALLINT fInfoType, PTR rgbInfoValue, SQLSMALLINT cbInfoValueMax, SQLSMALLINT * pcbInfoValue);
 
 	jclass entrypointClass = NULL;
 	jobject entrypointObj = NULL;

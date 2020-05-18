@@ -58,7 +58,8 @@ RETCODE JStatement::execDirect(ustring sql){
 		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "execDirect", "(JLjava/lang/String;)V");
 		env->CallVoidMethod(statement->connection->entrypointObj, method, stmt, jstr);
 		if(env->ExceptionCheck()){
-			LOG(1,"Error: JStatement::execDirect");
+			env->ExceptionDescribe();
+			LOG(1,"Error: JStatement::execDirect\n");
 			return SQL_ERROR;
 		}
 		return SQL_SUCCESS;
@@ -67,15 +68,15 @@ RETCODE JStatement::execDirect(ustring sql){
 	return ret;
 }
 
-RETCODE JStatement::getRowCount(SQLLEN * retCount){
+RETCODE JStatement::getRowCount(SQLINTEGER * retCount){
 	int ret;
-	std::function<int(JNIEnv*,JStatement* statement, SQLLEN * retCount)> func1;
-	func1 = [](JNIEnv *env,JStatement* statement, SQLLEN * retCount) {
+	std::function<int(JNIEnv*,JStatement* statement, SQLINTEGER * retCount)> func1;
+	func1 = [](JNIEnv *env,JStatement* statement, SQLINTEGER * retCount) {
 		jlong stmt = (long long)statement;
 		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "getRowCount", "(J)J");
 		*retCount = env->CallLongMethod(statement->connection->entrypointObj, method, stmt);
 		if(env->ExceptionCheck()){
-			LOG(1,"Error: JStatement::getRowCount");
+			LOG(1,"Error: JStatement::getRowCount\n");
 			return SQL_ERROR;
 		}
 		return SQL_SUCCESS;
@@ -92,7 +93,7 @@ RETCODE JStatement::getResultColumnCount(SQLSMALLINT * retCount){
 		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "getResultColumnCount", "(J)I");
 		*retCount = env->CallLongMethod(statement->connection->entrypointObj, method, stmt);
 		if(env->ExceptionCheck()){
-			LOG(1,"Error: JStatement::getRowCount");
+			LOG(1,"Error: JStatement::getRowCount\n");
 			return SQL_ERROR;
 		}
 		return SQL_SUCCESS;
@@ -101,10 +102,10 @@ RETCODE JStatement::getResultColumnCount(SQLSMALLINT * retCount){
 	return ret;
 }
 
-RETCODE JStatement::describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSMALLINT bufLength, SQLSMALLINT *nameLength, SQLSMALLINT * dataType, SQLULEN * colSize, SQLSMALLINT * decimalDigits, SQLSMALLINT * nullable){
+RETCODE JStatement::describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSMALLINT bufLength, SQLSMALLINT *nameLength, SQLSMALLINT * dataType, SQLUINTEGER * colSize, SQLSMALLINT * decimalDigits, SQLSMALLINT * nullable){
 	int ret;
-	std::function<int(JNIEnv*,JStatement* statement, SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSMALLINT bufLength, SQLSMALLINT *nameLength, SQLSMALLINT * dataType, SQLULEN * colSize, SQLSMALLINT * decimalDigits, SQLSMALLINT * nullable)> func1;
-	func1 = [](JNIEnv *env,JStatement* statement, SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSMALLINT bufLength, SQLSMALLINT *nameLength, SQLSMALLINT * dataType, SQLULEN * colSize, SQLSMALLINT * decimalDigits, SQLSMALLINT * nullable) {
+	std::function<int(JNIEnv*,JStatement* statement, SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSMALLINT bufLength, SQLSMALLINT *nameLength, SQLSMALLINT * dataType, SQLUINTEGER * colSize, SQLSMALLINT * decimalDigits, SQLSMALLINT * nullable)> func1;
+	func1 = [](JNIEnv *env,JStatement* statement, SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSMALLINT bufLength, SQLSMALLINT *nameLength, SQLSMALLINT * dataType, SQLUINTEGER * colSize, SQLSMALLINT * decimalDigits, SQLSMALLINT * nullable) {
 		jobject val;
 		jlong stmt = (long long)statement;
 		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "describeColumn", "(JI)[Ljava/lang/Object;");
@@ -143,7 +144,7 @@ RETCODE JStatement::describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSM
 		}
 		if(env->ExceptionCheck()){
 			env->ExceptionDescribe();
-			LOG(1,"Error: JStatement::describeColumn");
+			LOG(1,"Error: JStatement::describeColumn\n");
 			return SQL_ERROR;
 		}
 		return SQL_SUCCESS;
@@ -152,7 +153,7 @@ RETCODE JStatement::describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSM
 	return ret;
 }
 
-RETCODE getColumnAttribute_18(JNIEnv* env, jobjectArray data, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLLEN *numberValue){
+RETCODE getColumnAttribute_18(JNIEnv* env, jobjectArray data, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLINTEGER *numberValue){
 	if(rgbDesc != NULL){
 		jstring val=(jstring) env->GetObjectArrayElement(data, 0);
 		ustring wcharData = ustring(from_jstring(env,val));
@@ -169,19 +170,19 @@ RETCODE getColumnAttribute_18(JNIEnv* env, jobjectArray data, SQLPOINTER rgbDesc
 	return SQL_SUCCESS;
 }
 
-RETCODE getColumnAttribute_3(JNIEnv* env, jobjectArray data, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLLEN * numberValue){
-	if(numberValue == NULL)
+RETCODE getLongFromArrayObject(JNIEnv* env, jobjectArray data,int arrayPos, SQLINTEGER * pointer){
+	if(pointer == NULL)
 		return SQL_ERROR;
-	jobject val=(jobject) env->GetObjectArrayElement(data, 0);
-	*numberValue = jlong_to_long(env,val);
+	jobject val=(jobject) env->GetObjectArrayElement(data, arrayPos);
+	*pointer = jlong_to_long(env,val);
 	return SQL_SUCCESS;
 }
 
 
-RETCODE JStatement::getColumnAttribute(SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLLEN *numberValue){
+RETCODE JStatement::getColumnAttribute(SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLINTEGER *numberValue){
 	int ret;
-	std::function<int(JNIEnv* env,JStatement* statement, SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLLEN *numberValue)> func1;
-	func1 = [](JNIEnv *env,JStatement* statement, SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLLEN *numberValue) {
+	std::function<int(JNIEnv* env,JStatement* statement, SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLINTEGER *numberValue)> func1;
+	func1 = [](JNIEnv *env,JStatement* statement, SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLINTEGER *numberValue) {
 		int ret = SQL_SUCCESS;
 		jobject val;
 		jlong stmt = (long long)statement;
@@ -199,7 +200,7 @@ RETCODE JStatement::getColumnAttribute(SQLUSMALLINT icol, SQLUSMALLINT fDescType
 		case SQL_COLUMN_UPDATABLE:
 		case SQL_COLUMN_LENGTH://col size
 		case SQL_COLUMN_UNSIGNED://unsigned
-			ret = getColumnAttribute_3(env,data,rgbDesc,cbDescMax,pcbDesc, numberValue);
+			ret = getLongFromArrayObject(env,data,0, numberValue);
 			break;
 		default:
 			ret = SQL_ERROR;
@@ -210,4 +211,52 @@ RETCODE JStatement::getColumnAttribute(SQLUSMALLINT icol, SQLUSMALLINT fDescType
 	return ret;
 }
 
+
+RETCODE JStatement::getStatementAttr(SQLINTEGER	fAttribute, PTR		rgbValue, SQLINTEGER	cbValueMax, SQLINTEGER	*stringLength){
+	int ret;
+	std::function<int(JNIEnv* env,JStatement* statement, SQLINTEGER fAttribute, PTR		rgbValue, SQLINTEGER	cbValueMax, SQLINTEGER	*stringLength)> func1;
+	func1 = [](JNIEnv *env,JStatement* statement, SQLINTEGER fAttribute, PTR		rgbValue, SQLINTEGER	cbValueMax, SQLINTEGER	*stringLength) {
+		int ret = SQL_SUCCESS;
+		jobject val;
+		jlong stmt = (long long)statement;
+		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "getStatementAttribute", "(JI)[Ljava/lang/Object;");
+		jobjectArray data = (jobjectArray)env->CallObjectMethod(statement->connection->entrypointObj, method, stmt,fAttribute);
+		if(env->ExceptionCheck()){
+			env->ExceptionDescribe();
+			LOG(1,"Error: JStatement::getStatementAttr");
+			return SQL_ERROR;
+		}
+		switch(fAttribute){
+		case SQL_CURSOR_TYPE:
+		case SQL_CONCURRENCY:
+			ret = getLongFromArrayObject(env,data,0, (SQLINTEGER *)rgbValue);
+			break;
+		default:
+			ret = SQL_ERROR;
+		}
+		return ret;
+	};
+	ret = java_callback(func1,this,fAttribute,rgbValue,cbValueMax,stringLength);
+	return ret;
+}
+RETCODE JStatement::setStatementAttr(SQLINTEGER	fAttribute, PTR		rgbValue, SQLINTEGER	cbValueMax){
+	int ret;
+	std::function<int(JNIEnv* env,JStatement* statement, SQLINTEGER	fAttribute, PTR		rgbValue, SQLINTEGER	cbValueMax)> func1;
+	func1 = [](JNIEnv *env,JStatement* statement, SQLINTEGER	fAttribute, PTR		rgbValue, SQLINTEGER	cbValueMax) {
+		int ret = SQL_SUCCESS;
+		jobject val;
+		jlong stmt = (long long)statement;
+		jlong data = 0;
+		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "setStatementAttribute", "(JIJ)V");
+		env->CallVoidMethod(statement->connection->entrypointObj, method, stmt,fAttribute,data);
+		if(env->ExceptionCheck()){
+			env->ExceptionDescribe();
+			LOG(1,"Error: JStatement::setStatementAttr");
+			return SQL_ERROR;
+		}
+		return ret;
+	};
+	ret = java_callback(func1,this,fAttribute,rgbValue,cbValueMax);
+	return ret;
+}
 

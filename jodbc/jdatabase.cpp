@@ -143,7 +143,8 @@ RETCODE JDatabase::setConnectionParameter(ustring prop, ustring val) {
 		jmethodID method = env->GetMethodID(database->entrypointClass, "setConnectionParameter", "(Ljava/lang/String;Ljava/lang/String;)V");
 		env->CallVoidMethod(database->entrypointObj, method,to_jstring(prop),to_jstring(val));
 		if(env->ExceptionCheck()){
-			LOG(1,"Error: JDatabase::setConnectionParameter");
+			env->ExceptionDescribe();
+			LOG(1,"Error: JDatabase::setConnectionParameter\n");
 			return SQL_ERROR;
 		}
 		return SQL_SUCCESS;
@@ -159,15 +160,47 @@ RETCODE JDatabase::getConnectionAttr(SQLINTEGER fAttribute, SQLPOINTER rgbValue,
 	func1 = [](JNIEnv *env,JDatabase* connection, SQLINTEGER fAttribute, SQLINTEGER	cbValueMax) {
 		jlong attr = (long long)fAttribute;
 		jlong val = (long long)cbValueMax;
-		jmethodID method = env->GetMethodID(connection->entrypointClass, "getConnectionAttr", "(JJ)V");
-		env->CallVoidMethod(connection->entrypointObj, method, attr,val);
+		jmethodID method = env->GetMethodID(connection->entrypointClass, "getConnectionAttr", "(J)[Ljava/lang/Object;");
+		jobjectArray data = (jobjectArray)env->CallObjectMethod(connection->entrypointObj, method, attr,val);
 		if(env->ExceptionCheck()){
-			LOG(1,"Error: JDatabase::getConnectionAttr");
+			env->ExceptionDescribe();
+			LOG(1,"Error: JDatabase::getConnectionAttr\n");
 			return SQL_ERROR;
 		}
 		return SQL_SUCCESS;
 	};
 	ret = java_callback(func1,this,fAttribute,cbValueMax);
+	return ret;
+}
+
+RETCODE JDatabase::getInfo(SQLUSMALLINT fInfoType, PTR rgbInfoValue, SQLSMALLINT cbInfoValueMax, SQLSMALLINT * pcbInfoValue){
+	int ret;
+	std::function<int(JNIEnv*,JDatabase* connection,SQLUSMALLINT fInfoType, PTR rgbInfoValue, SQLSMALLINT cbInfoValueMax, SQLSMALLINT * pcbInfoValue)> func1;
+	func1 = [](JNIEnv *env,JDatabase* connection, SQLUSMALLINT fInfoType, PTR rgbInfoValue, SQLSMALLINT cbInfoValueMax, SQLSMALLINT * pcbInfoValue) {
+		int ret;
+		jint type = fInfoType;
+		SQLINTEGER retSize;
+
+		jmethodID method = env->GetMethodID(connection->entrypointClass, "getInfo", "(I)[Ljava/lang/Object;");
+		jobjectArray data = (jobjectArray)env->CallObjectMethod(connection->entrypointObj, method, type);
+		if(env->ExceptionCheck()){
+			env->ExceptionDescribe();
+			LOG(1,"Error: JDatabase::getInfo\n");
+			return SQL_ERROR;
+		}
+		switch(fInfoType){
+		case SQL_DBMS_NAME:
+			ret = jarrayToString(env, data, 0, rgbInfoValue, cbInfoValueMax,&retSize);
+			if(pcbInfoValue!=NULL)
+				*pcbInfoValue = retSize;
+			break;
+		default:
+			ret = SQL_ERROR;
+		}
+		return ret;
+
+	};
+	ret = java_callback(func1,this,fInfoType,rgbInfoValue,cbInfoValueMax,pcbInfoValue);
 	return ret;
 }
 
@@ -181,6 +214,7 @@ RETCODE JDatabase::setConnectionAttr(SQLINTEGER fAttribute, PTR rgbValue, SQLINT
 		jmethodID method = env->GetMethodID(connection->entrypointClass, "setConnectionAttr", "(JJ)V");
 		env->CallVoidMethod(connection->entrypointObj, method, attr,val);
 		if(env->ExceptionCheck()){
+			env->ExceptionDescribe();
 			LOG(1,"Error: JDatabase::setConnectionAttr");
 			return SQL_ERROR;
 		}
@@ -198,6 +232,7 @@ RETCODE JDatabase::javaConnect() {
 		jmethodID method = env->GetMethodID(database->entrypointClass, "connect", "()V");
 		env->CallVoidMethod(database->entrypointObj, method);
 		if(env->ExceptionCheck()){
+			env->ExceptionDescribe();
 			LOG(1,"Error: JDatabase::javaConnect");
 			return SQL_ERROR;
 		}
@@ -215,12 +250,13 @@ RETCODE JDatabase::preInitConnection(){
 		jclass cls = (jclass) env->NewGlobalRef(env->FindClass("org/dmitri/jodbc/JniEntrypoint"));
 		database->entrypointClass = cls;
 		if(env->ExceptionCheck() || database->entrypointClass == NULL){
-			LOG(1,"Error: JDatabase::libraryInit 1");
+			LOG(1,"Error: JDatabase::libraryInit 1\n");
 			return SQL_ERROR;RETCODE libraryInit(SQLWCHAR *szConnStrIn, SQLSMALLINT cbConnStrIn);
 		}
 		jmethodID createInstanceMethod = env->GetStaticMethodID(cls, "getInstance", "()Lorg/dmitri/jodbc/JniEntrypoint;");
 		jobject obj = env->NewGlobalRef(env->CallStaticObjectMethod(cls, createInstanceMethod));
 		if(obj == NULL || env->ExceptionCheck()){
+			env->ExceptionDescribe();
 			LOG(1,"Error: JDatabase::libraryInit 2\n");
 			return SQL_ERROR;
 		}

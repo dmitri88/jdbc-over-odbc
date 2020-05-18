@@ -62,8 +62,8 @@ public class JniEntrypoint {
 	}
 	
 	
-	public void getConnectionAttr(long attr, long cbMax) {
-		database.getConnectionAttribute(attr,cbMax);
+	public Object[] getConnectionAttr(long attr) {
+		return database.getConnectionAttribute(attr);
 	}
 	
 	public void setConnectionAttr(long attr, long cbValue) {
@@ -110,4 +110,25 @@ public class JniEntrypoint {
 		return stmt.getColumnAttribute(colNum,descType);
 	}
 
+	
+	public Object[] getStatementAttribute(long stmtId,int attr) {
+		OdbcStatement stmt = database.getStatement(stmtId);
+		if(stmt == null) {
+			throw new RuntimeException("statement not found "+ stmtId);
+		}
+		return stmt.getStatementAttribute(attr);
+	}
+	
+	
+	public void setStatementAttribute(long stmtId,int attr, long data) {
+		OdbcStatement stmt = database.getStatement(stmtId);
+		if(stmt == null) {
+			throw new RuntimeException("statement not found "+ stmtId);
+		}
+		stmt.setStatementAttribute(attr,data);	
+	}
+	
+	public Object[] getInfo(int fieldId) {
+		return database.getInfo(fieldId);
+	}
 }

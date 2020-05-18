@@ -54,6 +54,8 @@ void test_java_callback() {
 
 void test_attributes(SQLHANDLE hDbc, SQLHANDLE hStmt){
 	int ret;
+	char data[1024];
+	SQLINTEGER size;
 	//SQLGetConnectAttrW(SQLHDBC hdbc, SQLINTEGER fAttribute, SQLPOINTER rgbValue, SQLINTEGER cbValueMax, SQLINTEGER *pcbValue);
 	//SQLSetConnectAttrW(HDBC hdbc, SQLINTEGER	fAttribute, PTR		rgbValue, SQLINTEGER	cbValue);
 
@@ -61,6 +63,9 @@ void test_attributes(SQLHANDLE hDbc, SQLHANDLE hStmt){
 	assert(ret == 0);
 
 	ret = SQLGetConnectAttrW(hDbc, 0, NULL, 514, NULL);
+	assert(ret == 0);
+
+	ret = SQLGetConnectAttrW(hDbc, SQL_ATTR_CURRENT_CATALOG, data, 1024, &size);
 	assert(ret == 0);
 }
 
@@ -71,6 +76,7 @@ SQLHANDLE create_database(){
 
 	SQLWCHAR data[200];
 	short int retConnStrLength;
+	SQLSMALLINT retLen;
 
 	ret = SQLAllocHandle( SQL_HANDLE_ENV, 0, &hEnv);
 	printf("SQLAllocHandle result %d %p\n", ret, hEnv);
@@ -80,13 +86,12 @@ SQLHANDLE create_database(){
 	ret = SQLAllocHandle( SQL_HANDLE_DBC, hEnv, &hDbc);
 	printf("SQLAllocHandle result %d %p\n", ret, hDbc);
 
-	ret = SQLGetInfoW(NULL, SQL_ODBC_VER, &data, 255, NULL);
+	ret = SQLGetInfoW(hDbc, SQL_ODBC_VER, &data, 255, NULL);
 	printf("SQLGetInfoW SQL_ODBC_VER result %d %s\n", ret,
 			unicode_to_utf8(data));
-	ret = SQLGetInfoW(NULL, SQL_DRIVER_ODBC_VER, &data, 255, NULL);
+	ret = SQLGetInfoW(hDbc, SQL_DRIVER_ODBC_VER, &data, 255, NULL);
 	printf("SQLGetInfoW SQL_DRIVER_ODBC_VER result %d %s\n", ret,
 			unicode_to_utf8(data));
-
 	printf("\n");
 
 	short unsigned int *enabledFuncs = (short unsigned int*) malloc(
@@ -97,6 +102,12 @@ SQLHANDLE create_database(){
 	ret = SQLDriverConnectW(hDbc, NULL, utf8_to_unicode("DSN=Simba;"), 0, NULL,
 			0, &retConnStrLength, 0);
 	printf("SQLDriverConnectW result %d\n", ret);
+
+	ret = SQLGetInfoW(hDbc, SQL_DBMS_NAME, &data, 255, &retLen);
+	assert(ret == 0);
+	assert(ustring(data).compare(ustring(L"Microsoft SQL Server"))==0);
+
+
 
 	return hDbc;
 }
@@ -150,7 +161,15 @@ void test_queries(SQLHANDLE hStmt){
 	assert(ret == 0);
 	assert(numberValue == 11);
 
-	ret = SQLColAttributeW(hStmt, 1, 8, data, 1024, &bufLength, &numberValue);
+	// 11 27 1227 1228 0
+	ret = SQLSetStmtAttrW(hStmt, 11, data, 1024);
+	assert(ret == 0);
+
+
+	//6 SQL_CURSOR_TYPE  7 SQL_CONCURRENCY
+	ret = SQLGetStmtAttrW(hStmt, SQL_CURSOR_TYPE, data, 1024, &numberValue);
+	assert(ret == 0);
+	ret = SQLGetStmtAttrW(hStmt, SQL_CONCURRENCY, data, 1024, &numberValue);
 	assert(ret == 0);
 
 
