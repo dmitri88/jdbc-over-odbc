@@ -593,3 +593,17 @@ RETCODE SQL_API SQLNativeSqlW(HDBC hdbc,SQLWCHAR *szSqlStrIn,SQLINTEGER	cbSqlStr
 	LOG(5, "Exiting SQLNativeSqlW %d (%s,%li,%s,%li,%d)\n",ret,unicode_to_utf8(szSqlStrIn),cbSqlStrIn,unicode_to_utf8(szSqlStr),cbSqlStrMax,POINTER_VAL(pcbSqlStr));
 	return ret;
 }
+
+RETCODE	SQL_API SQLBindCol(HSTMT hstmt, SQLUSMALLINT column, SQLSMALLINT type, PTR value, SQLINTEGER bufLength, SQLINTEGER * strLengthOrIndex){
+	RETCODE	ret;
+
+	LOG(5, "Entering SQLBindCol (%d,%d,%p,%li,%p)\n",column,type,value,bufLength,strLengthOrIndex);
+	if(!hstmt)
+		return SQL_INVALID_HANDLE;
+	JStatement* stmt = (JStatement*)hstmt;
+
+	ret = stmt->bindColumn(column,type,value,(SQLUINTEGER)bufLength,(SQLUINTEGER*)strLengthOrIndex);
+
+	LOG(5, "Exiting SQLBindCol %d (%d,%d,%p,%li,%d)\n",ret,column,type,value,bufLength,POINTER_VAL(strLengthOrIndex));
+	return ret;
+}

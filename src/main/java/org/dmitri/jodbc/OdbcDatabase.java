@@ -9,8 +9,6 @@ import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.management.RuntimeErrorException;
-
 import org.dmitri.jodbc.dto.DataTypeInfo;
 import org.dmitri.jodbc.enums.OdbcConnectionAttribute;
 import org.dmitri.jodbc.enums.OdbcInfoType;
@@ -107,6 +105,7 @@ public class OdbcDatabase {
 		log.debug("JAVA getConnectionAttribute {} ", attr!=null?attr:attrLong);
 		
 		if(attr==null) {
+			log.warn("UNDEFINED connection attibute:"+attrLong);
 			return new Object[0];
 		}
 		
@@ -119,6 +118,7 @@ public class OdbcDatabase {
 			break;
 
 		default:
+			log.warn("UNDEFINED connection attibute:"+attr);
 			return new Object[0];
 		}  	
 		return ret;			

@@ -265,14 +265,25 @@ SQLHANDLE create_statement(SQLHANDLE hDbc){
 	return hStmt;
 }
 
-void test_queries(SQLHANDLE hDbc,SQLHANDLE hStmt){
+void test_queries(SQLHANDLE hDbc){
 	int ret;
 	SQLINTEGER retCount;
+	SQLHANDLE hStmt;
 	char data[1024];
 	char retdata[1024];
 
+	ret = SQLAllocHandle( SQL_HANDLE_STMT, hDbc, &hStmt);
+	assert(ret == 0);
+
 	ret = SQLNativeSqlW(hDbc, (SQLWCHAR *)ustring(L"").c_str(),512, NULL, 0, &retCount);
 	assert(ret == 0);
+
+	ustring sql = ustring(L"SELECT COUNT(*) AS RecordCount FROM t_package");
+	ret = SQLExecDirectW(hStmt, (SQLWCHAR*)sql.c_str(),sql.size());
+	assert(ret == 0);
+
+
+	SQLBindCol(hStmt, 1, SQL_C_WCHAR, (PTR)data, /*SQLUINTEGER bufLength*/100, /*SQLUINTEGER * strLengthOrIndex*/&retCount);
 }
 void test_attributes(SQLHANDLE hStmt){
 	int ret;
@@ -394,7 +405,7 @@ int main(int argc, char **argv) {
 
 	test_attributes2(hDbc,hStmt);
 	test_attributes(hStmt);
-	test_queries(hDbc,hStmt);
+	test_queries(hDbc);
 
 	printf("\ntesting-done\n");
 }

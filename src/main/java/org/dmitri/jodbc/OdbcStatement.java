@@ -4,9 +4,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.dmitri.jodbc.dto.BoundParameter;
 import org.dmitri.jodbc.dto.DataTypeInfo;
 import org.dmitri.jodbc.enums.OdbcColumnAttribute;
+import org.dmitri.jodbc.enums.OdbcFreeStatement;
 import org.dmitri.jodbc.enums.OdbcStatementAttribute;
 
 import lombok.RequiredArgsConstructor;
@@ -21,9 +25,41 @@ public class OdbcStatement {
 	
 	private PreparedStatement statement;
 	private ResultSet result;
+	private Map<Integer,BoundParameter> bindParameters =  new HashMap<>();
 
 	public void freeResource(long option) {
 		log.debug("JAVA freeResource {} {}",statementId,option);
+		OdbcFreeStatement attr = OdbcFreeStatement.valueOf((int)option);
+		switch(attr) {
+		case SQL_CLOSE:
+			freeResourceClose();
+			break;
+		//case SQL_DROP:
+		case SQL_UNBIND:
+			freeResourceUnbind();
+			break;
+		case SQL_RESET_PARAMS:
+			freeResourceReset();
+			break;
+		}
+		
+	}
+	private void freeResourceClose() {
+		if(result != null) {
+			try {
+				result.close();
+			} catch (SQLException e) {
+			}
+			result = null;
+		}
+	}
+	
+	private void freeResourceUnbind() {
+		bindParameters.clear();
+	}
+	
+	private void freeResourceReset() {
+		
 	}
 
 	public void execDirect(String sql) {
@@ -109,9 +145,8 @@ public class OdbcStatement {
 		case SQL_DESC_BASE_TABLE_NAME:
 		case SQL_COLUMN_OWNER_NAME:
 		case SQL_COLUMN_QUALIFIER_NAME:
-		case UNKNOWN_SHIT_1:
-			return new Object[] {};
 		default:
+			log.warn("UNDEFINED column attibute:"+attr);
 			//throw new RuntimeException("undefined attr: "+attr);
 			return new Object[] {};
 		}
@@ -169,6 +204,7 @@ public class OdbcStatement {
 		case SQL_CONCURRENCY:
 			return new Object[] { Long.valueOf(1)};//SQL_CONCUR_READ_ONLY
 		default:
+			log.warn("UNDEFINED statement attibute:"+attr);
 				return null;
 		}
 	}
@@ -176,7 +212,11 @@ public class OdbcStatement {
 	public void setStatementAttribute(int attrInt, long data) {
 		OdbcStatementAttribute attr = OdbcStatementAttribute.valueOf(attrInt);
 		log.debug("JAVA setStatementAttribute {} {} {}",statementId, attr!=null?attr:attrInt,data);
-		
+	}
+	
+	public void bindColumn(int column,int type, long dataPtr,long size, long retLength) {
+		log.debug("JAVA bindColumn {} {} {} {} {} {}",statementId, column,type,dataPtr,size,retLength);
+		bindParameters.put(column, new BoundParameter(column, type,dataPtr, size, retLength));
 	}
 
 }

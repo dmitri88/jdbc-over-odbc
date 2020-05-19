@@ -50,13 +50,18 @@ public enum OdbcStatementAttribute {
 
 
 	//if (ODBCVER >= 0x0380)
-	SQL_ATTR_ASYNC_STMT_EVENT           (29);
+	SQL_ATTR_ASYNC_STMT_EVENT           (29),
 	//endif /* ODBCVER >= 0x0380 */
 
 	// (ODBCVER < 0x0300)
 	//SQL_STMT_OPT_MAX               (14) , //SQL_ROW_NUMBER
 	//SQL_STMT_OPT_MIN	(0), //SQL_QUERY_TIMEOUT
-	
+	SQL_ATTR_APP_ROW_DESC       (10010),
+	SQL_ATTR_APP_PARAM_DESC     (10011),
+	SQL_ATTR_IMP_ROW_DESC       (10012),
+	SQL_ATTR_IMP_PARAM_DESC     (10013),
+	SQL_ATTR_CURSOR_SCROLLABLE  (-1),
+	SQL_ATTR_CURSOR_SENSITIVITY (-2);
 	
 	
 	@Getter

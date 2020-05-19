@@ -283,3 +283,24 @@ RETCODE JStatement::setStatementAttr(SQLINTEGER	fAttribute, PTR		rgbValue, SQLIN
 	return ret;
 }
 
+RETCODE JStatement::bindColumn(SQLUSMALLINT column, SQLSMALLINT type, PTR value, SQLUINTEGER bufLength, SQLUINTEGER * strLengthOrIndex){
+	int ret;
+
+	std::function<int(JNIEnv* env,JStatement* statement, SQLUSMALLINT column, SQLSMALLINT type, PTR value, SQLUINTEGER bufLength, SQLUINTEGER * strLengthOrIndex)> func1;
+	func1 = [](JNIEnv *env,JStatement* statement, SQLUSMALLINT column, SQLSMALLINT type, PTR value, SQLUINTEGER bufLength, SQLUINTEGER * strLengthOrIndex) {
+		int ret = SQL_SUCCESS;
+		jobject val;
+		jlong stmt = (long long)statement;
+		jlong data = (unsigned long)value;
+		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "bindColumn", "(JIIJJJ)V");
+		env->CallVoidMethod(statement->connection->entrypointObj, method, stmt,column,type,(jlong)((SQLUINTEGER)value),(jlong)((SQLINTEGER)(bufLength)),(jlong)((SQLUINTEGER)strLengthOrIndex));
+		if(env->ExceptionCheck()){
+			env->ExceptionDescribe();
+			LOG(1,"Error: JStatement::bindColumn\n");
+			return SQL_ERROR;
+		}
+		return ret;
+	};
+	ret = java_callback(func1,this,column,type,value,bufLength,strLengthOrIndex);
+	return ret;
+}

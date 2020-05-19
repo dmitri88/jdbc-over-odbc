@@ -135,4 +135,12 @@ public class JniEntrypoint {
 	public String getNativeSql(String sql) {
 		return database.getNativeSql(sql);
 	}
+	
+	public void bindColumn(long stmtId,int column,int type, long dataPtr,long size, long retLength) {
+		OdbcStatement stmt = database.getStatement(stmtId);
+		if(stmt == null) {
+			throw new RuntimeException("statement not found "+ stmtId);
+		}
+		stmt.bindColumn(column, type, dataPtr, size, retLength);
+	}
 }
