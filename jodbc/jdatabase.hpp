@@ -18,9 +18,10 @@ public:
 	RETCODE preInitConnection();
 	RETCODE connect(SQLWCHAR *szConnStrIn, SQLSMALLINT cbConnStrIn);
 	RETCODE setConnectionParameter(ustring prop, ustring val);
-	RETCODE getConnectionAttr(SQLINTEGER fAttribute, SQLPOINTER rgbValue, SQLINTEGER cbValueMax, SQLINTEGER *pcbValue);
-	RETCODE setConnectionAttr(SQLINTEGER fAttribute, PTR rgbValue, SQLINTEGER	cbValue);
+	RETCODE getConnectionAttr(SQLINTEGER fAttribute, SQLPOINTER rgbValue, SQLUINTEGER cbValueMax, SQLUINTEGER *pcbValue);
+	RETCODE setConnectionAttr(SQLINTEGER fAttribute, PTR rgbValue, SQLUINTEGER	cbValue);
 	RETCODE getInfo(SQLUSMALLINT fInfoType, PTR rgbInfoValue, SQLSMALLINT cbInfoValueMax, SQLSMALLINT * pcbInfoValue);
+	RETCODE getNativeSql(ustring sql,SQLWCHAR * out,SQLUINTEGER	cbSqlStrMax,SQLUINTEGER   *pcbSqlStr);
 
 	jclass entrypointClass = NULL;
 	jobject entrypointObj = NULL;

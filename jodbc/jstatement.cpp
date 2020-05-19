@@ -106,6 +106,7 @@ RETCODE JStatement::describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSM
 	int ret;
 	std::function<int(JNIEnv*,JStatement* statement, SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSMALLINT bufLength, SQLSMALLINT *nameLength, SQLSMALLINT * dataType, SQLUINTEGER * colSize, SQLSMALLINT * decimalDigits, SQLSMALLINT * nullable)> func1;
 	func1 = [](JNIEnv *env,JStatement* statement, SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSMALLINT bufLength, SQLSMALLINT *nameLength, SQLSMALLINT * dataType, SQLUINTEGER * colSize, SQLSMALLINT * decimalDigits, SQLSMALLINT * nullable) {
+		int ret = SQL_SUCCESS;
 		jobject val;
 		jlong stmt = (long long)statement;
 		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "describeColumn", "(JI)[Ljava/lang/Object;");
@@ -121,7 +122,8 @@ RETCODE JStatement::describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSM
 				*nameLength = 0;
 			} else {
 				*nameLength = colName2.size()*sizeof(SQLWCHAR);
-				memcpy(colName,colName2.c_str(),len1);
+				//memcpy(colName,colName2.c_str(),len1);
+				ret = strcpy(colName,bufLength,colName2);
 			}
 		} else {
 			*nameLength = 0;
@@ -147,26 +149,27 @@ RETCODE JStatement::describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSM
 			LOG(1,"Error: JStatement::describeColumn\n");
 			return SQL_ERROR;
 		}
-		return SQL_SUCCESS;
+		return ret;
 	};
 	ret = java_callback(func1,this,colnum,colName,bufLength,nameLength,dataType, colSize, decimalDigits, nullable);
 	return ret;
 }
 
 RETCODE getColumnAttribute_18(JNIEnv* env, jobjectArray data, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLINTEGER *numberValue){
+	int ret = SQL_SUCCESS;
 	if(rgbDesc != NULL){
 		jstring val=(jstring) env->GetObjectArrayElement(data, 0);
 		ustring wcharData = ustring(from_jstring(env,val));
-		if(wcharData.size()>cbDescMax){
+		if(wcharData.size()>(SQLUSMALLINT)cbDescMax){
 			return SQL_ERROR;
 		}
-		memcpy(rgbDesc,wcharData.c_str(),(wcharData.size()+1)* sizeof(SQLWCHAR));
+		ret = strcpy((SQLWCHAR*)rgbDesc,cbDescMax/2,wcharData);
 		*pcbDesc = wcharData.size()* sizeof(SQLWCHAR);
 	}
 	if(numberValue!= NULL){
 		*numberValue = 0;
 	}
-	return SQL_SUCCESS;
+	return ret;
 }
 
 RETCODE getLongFromArrayObject(JNIEnv* env, jobjectArray data,int arrayPos, SQLINTEGER * pointer){

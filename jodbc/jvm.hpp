@@ -19,12 +19,14 @@ extern JavaVM* globalJvm;
 
 #define to_jstring(str) env->NewStringUTF(str.utf8().c_str())
 extern std::string from_jstring(JNIEnv *env, jstring jstr);
+#define jstring_to_ustring(env,jstr)  ustring(from_jstring(env,jstr))
+
 extern jint jinteger_to_jint(JNIEnv *env, jobject intObj);
 extern jlong jlong_to_long(JNIEnv *env, jobject longObj);
 
-extern int jarrayToString(JNIEnv *env, jobjectArray array, int pos, PTR pointer, SQLINTEGER maxSize,SQLINTEGER *retSize);
-extern int jarrayToInt(JNIEnv *env, jobjectArray array, int pos, PTR pointer, SQLINTEGER maxSize);
-extern int jarrayToShort(JNIEnv *env, jobjectArray array, int pos, PTR pointer, SQLINTEGER maxSize);
+extern int jarrayToString(JNIEnv *env, jobjectArray array, int pos, PTR pointer, SQLUINTEGER maxSize,SQLUINTEGER *retSize);
+extern int jarrayToInt(JNIEnv *env, jobjectArray array, int pos, PTR pointer, SQLUINTEGER maxSize);
+extern int jarrayToShort(JNIEnv *env, jobjectArray array, int pos, PTR pointer, SQLUINTEGER maxSize);
 
 
 

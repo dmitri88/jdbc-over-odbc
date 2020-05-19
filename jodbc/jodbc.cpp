@@ -469,8 +469,8 @@ RETCODE SQL_API SQLGetConnectAttrW(
     SQLHDBC            hdbc,
     SQLINTEGER         fAttribute,
     SQLPOINTER         rgbValue,
-    SQLINTEGER         cbValueMax,
-    SQLINTEGER     *pcbValue)
+	SQLINTEGER         cbValueMax,
+	SQLINTEGER     *pcbValue)
 {
 	RETCODE	ret;
 
@@ -479,7 +479,7 @@ RETCODE SQL_API SQLGetConnectAttrW(
 		return SQL_INVALID_HANDLE;
 	JDatabase* conn = (JDatabase*)hdbc;
 
-	ret = conn->getConnectionAttr(fAttribute,rgbValue,cbValueMax,pcbValue);
+	ret = conn->getConnectionAttr(fAttribute,rgbValue,(SQLUINTEGER)cbValueMax,(SQLUINTEGER*)pcbValue);
 
 	LOG(5, "Exiting SQLGetConnectAttrW %d (%p,%li,%p,%li,%d)\n",ret,hdbc,fAttribute,rgbValue,cbValueMax,POINTER_VAL(pcbValue));
 	return ret;
@@ -577,4 +577,19 @@ SQLGetTypeInfoW(SQLHSTMT	stmt,
 {
 	LOG(5, "Entering SQLGetTypeInfoW\n");
 	return SQL_ERROR;
+}
+
+RETCODE SQL_API SQLNativeSqlW(HDBC hdbc,SQLWCHAR *szSqlStrIn,SQLINTEGER	cbSqlStrIn,SQLWCHAR *szSqlStr,SQLINTEGER	cbSqlStrMax,SQLINTEGER   *pcbSqlStr){
+	RETCODE	ret;
+
+	LOG(5, "Entering SQLNativeSqlW (%s,%li,%p,%li,%p)\n",unicode_to_utf8(szSqlStrIn),cbSqlStrIn,szSqlStr,cbSqlStrMax,pcbSqlStr);
+	if(!hdbc)
+		return SQL_INVALID_HANDLE;
+	JDatabase* conn = (JDatabase*)hdbc;
+
+	ustring str(szSqlStrIn,cbSqlStrIn);
+	ret = conn->getNativeSql(str,szSqlStr,(SQLUINTEGER)cbSqlStrMax,(SQLUINTEGER*)pcbSqlStr);
+
+	LOG(5, "Exiting SQLNativeSqlW %d (%s,%li,%s,%li,%d)\n",ret,unicode_to_utf8(szSqlStrIn),cbSqlStrIn,unicode_to_utf8(szSqlStr),cbSqlStrMax,POINTER_VAL(pcbSqlStr));
+	return ret;
 }

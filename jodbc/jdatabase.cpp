@@ -153,11 +153,11 @@ RETCODE JDatabase::setConnectionParameter(ustring prop, ustring val) {
 	return ret;
 }
 
-RETCODE JDatabase::getConnectionAttr(SQLINTEGER fAttribute, SQLPOINTER rgbValue, SQLINTEGER cbValueMax, SQLINTEGER *pcbValue)
+RETCODE JDatabase::getConnectionAttr(SQLINTEGER fAttribute, SQLPOINTER rgbValue, SQLUINTEGER cbValueMax, SQLUINTEGER *pcbValue)
 {
 	int ret;
-	std::function<int(JNIEnv*,JDatabase* connection,SQLINTEGER fAttribute, SQLPOINTER rgbValue,SQLINTEGER	cbValueMax, SQLINTEGER *pcbValue)> func1;
-	func1 = [](JNIEnv *env,JDatabase* connection, SQLINTEGER fAttribute, SQLPOINTER rgbValue,SQLINTEGER	cbValueMax, SQLINTEGER *pcbValue) {
+	std::function<int(JNIEnv*,JDatabase* connection,SQLINTEGER fAttribute, SQLPOINTER rgbValue,SQLUINTEGER	cbValueMax, SQLUINTEGER *pcbValue)> func1;
+	func1 = [](JNIEnv *env,JDatabase* connection, SQLINTEGER fAttribute, SQLPOINTER rgbValue,SQLUINTEGER	cbValueMax, SQLUINTEGER *pcbValue) {
 		jlong attr = (long long)fAttribute;
 		jlong val = (long long)cbValueMax;
 		jmethodID method = env->GetMethodID(connection->entrypointClass, "getConnectionAttr", "(J)[Ljava/lang/Object;");
@@ -184,7 +184,7 @@ RETCODE JDatabase::getInfo(SQLUSMALLINT fInfoType, PTR rgbInfoValue, SQLSMALLINT
 	func1 = [](JNIEnv *env,JDatabase* connection, SQLUSMALLINT fInfoType, PTR rgbInfoValue, SQLSMALLINT cbInfoValueMax, SQLSMALLINT * pcbInfoValue) {
 		int ret;
 		jint type = fInfoType;
-		SQLINTEGER retSize;
+		SQLUINTEGER retSize;
 
 		jmethodID method = env->GetMethodID(connection->entrypointClass, "getInfo", "(I)[Ljava/lang/Object;");
 		jobjectArray data = (jobjectArray)env->CallObjectMethod(connection->entrypointObj, method, type);
@@ -250,11 +250,11 @@ RETCODE JDatabase::getInfo(SQLUSMALLINT fInfoType, PTR rgbInfoValue, SQLSMALLINT
 	return ret;
 }
 
-RETCODE JDatabase::setConnectionAttr(SQLINTEGER fAttribute, PTR rgbValue, SQLINTEGER	cbValue)
+RETCODE JDatabase::setConnectionAttr(SQLINTEGER fAttribute, PTR rgbValue, SQLUINTEGER	cbValue)
 {
 	int ret;
-	std::function<int(JNIEnv*,JDatabase* connection,SQLINTEGER fAttribute, SQLINTEGER	cbValue)> func1;
-	func1 = [](JNIEnv *env,JDatabase* connection, SQLINTEGER fAttribute, SQLINTEGER	cbValue) {
+	std::function<int(JNIEnv*,JDatabase* connection,SQLINTEGER fAttribute, SQLUINTEGER	cbValue)> func1;
+	func1 = [](JNIEnv *env,JDatabase* connection, SQLINTEGER fAttribute, SQLUINTEGER	cbValue) {
 		jlong attr = (long long)fAttribute;
 		jlong val = (long long)cbValue;
 		jmethodID method = env->GetMethodID(connection->entrypointClass, "setConnectionAttr", "(JJ)V");
@@ -268,6 +268,37 @@ RETCODE JDatabase::setConnectionAttr(SQLINTEGER fAttribute, PTR rgbValue, SQLINT
 	};
 	ret = java_callback(func1,this,fAttribute,cbValue);
 	return ret;
+}
+
+RETCODE JDatabase::getNativeSql(ustring sql,SQLWCHAR * out,SQLUINTEGER	cbSqlStrMax,SQLUINTEGER   *pcbSqlStr){
+	int ret;
+	std::function<int(JNIEnv*,JDatabase* connection,ustring sql,SQLWCHAR * out,SQLUINTEGER	cbSqlStrMax,SQLUINTEGER   *pcbSqlStr)> func1;
+	func1 = [](JNIEnv *env,JDatabase* connection, ustring sql,SQLWCHAR * out,SQLUINTEGER	cbSqlStrMax,SQLUINTEGER   *pcbSqlStr) {
+		//jlong attr = (long long)fAttribute;
+		//jlong val = (long long)cbValue;
+		jmethodID method = env->GetMethodID(connection->entrypointClass, "getNativeSql", "(Ljava/lang/String;)Ljava/lang/String;");
+		jstring ret = (jstring)env->CallObjectMethod(connection->entrypointObj, method, to_jstring(sql));
+		if(env->ExceptionCheck()){
+			env->ExceptionDescribe();
+			LOG(1,"Error: JDatabase::getNativeSql");
+			return SQL_ERROR;
+		}
+		if(ret == NULL){
+			LOG(1,"Error: JDatabase::getNativeSql missing response");
+			return SQL_ERROR;
+		}
+		ustring retString = jstring_to_ustring(env,ret);
+		if(out != NULL){
+			strcpy(out,cbSqlStrMax,retString);
+		}
+		if(pcbSqlStr != NULL){
+			*pcbSqlStr = retString.size();
+		}
+		return SQL_SUCCESS;
+	};
+	ret = java_callback(func1,this,sql,out,cbSqlStrMax,pcbSqlStr);
+	return ret;
+	return SQL_SUCCESS;
 }
 
 

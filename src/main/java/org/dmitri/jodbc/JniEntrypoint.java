@@ -131,4 +131,8 @@ public class JniEntrypoint {
 	public Object[] getInfo(int fieldId) {
 		return database.getInfo(fieldId);
 	}
+	
+	public String getNativeSql(String sql) {
+		return database.getNativeSql(sql);
+	}
 }

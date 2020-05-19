@@ -272,5 +272,10 @@ public class OdbcDatabase {
 		}  	
 		return ret;
 	}
+	public String getNativeSql(String sql) {
+		if(sql == null)
+			return "";
+		return sql;
+	}
 
 }

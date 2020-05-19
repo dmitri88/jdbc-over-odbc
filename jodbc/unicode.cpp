@@ -327,3 +327,18 @@ char *ucs2_to_utf8(const SQLWCHAR *ucs2str, SQLLEN ilen, SQLLEN *olen,char *buff
 	return utf8str;
 }
 
+int strcpy(SQLWCHAR* dest, SQLULEN max,const SQLWCHAR* src,unsigned int len){
+	if(max<len){
+		return -1;
+	}
+	memcpy(dest,src,len*sizeof(unsigned short));
+	if(max>len){
+		*(dest+len)=0;
+	}
+	return 0;
+}
+
+int strcpy(SQLWCHAR* dest, SQLULEN max,ustring src){
+	return strcpy(dest,max,src.c_str(),src.size());
+}
+

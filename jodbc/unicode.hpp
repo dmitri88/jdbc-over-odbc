@@ -67,6 +67,9 @@ private:
     }
 };
 
+extern int strcpy(SQLWCHAR* dest, SQLULEN max,const SQLWCHAR* src,int len);
+extern int strcpy(SQLWCHAR* dest, SQLULEN max,ustring stc);
+
 //debug functions
 #define unicode_to_utf8(str) (str!=NULL?ustring(str).utf8().c_str():"")
 #define utf8_to_unicode(str) utf8_to_ucs2_s(str, -1, NULL, -1)

@@ -47,7 +47,7 @@ void test_java_callback() {
 	assert(ret == 0);
 }
 
-void test_attributes(SQLHANDLE hDbc, SQLHANDLE hStmt){
+void test_attributes2(SQLHANDLE hDbc, SQLHANDLE hStmt){
 	int ret;
 	char data[1024];
 	SQLINTEGER size;
@@ -265,7 +265,16 @@ SQLHANDLE create_statement(SQLHANDLE hDbc){
 	return hStmt;
 }
 
-void test_queries(SQLHANDLE hStmt){
+void test_queries(SQLHANDLE hDbc,SQLHANDLE hStmt){
+	int ret;
+	SQLINTEGER retCount;
+	char data[1024];
+	char retdata[1024];
+
+	ret = SQLNativeSqlW(hDbc, (SQLWCHAR *)ustring(L"").c_str(),512, NULL, 0, &retCount);
+	assert(ret == 0);
+}
+void test_attributes(SQLHANDLE hStmt){
 	int ret;
 	SQLLEN retCount;
 	SQLSMALLINT colCount;
@@ -383,8 +392,9 @@ int main(int argc, char **argv) {
 	hDbc = create_database();
 	hStmt = create_statement(hDbc);
 
-	test_attributes(hDbc,hStmt);
-	test_queries(hStmt);
+	test_attributes2(hDbc,hStmt);
+	test_attributes(hStmt);
+	test_queries(hDbc,hStmt);
 
 	printf("\ntesting-done\n");
 }
