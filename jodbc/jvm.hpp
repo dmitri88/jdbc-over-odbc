@@ -23,6 +23,9 @@ extern jint jinteger_to_jint(JNIEnv *env, jobject intObj);
 extern jlong jlong_to_long(JNIEnv *env, jobject longObj);
 
 extern int jarrayToString(JNIEnv *env, jobjectArray array, int pos, PTR pointer, SQLINTEGER maxSize,SQLINTEGER *retSize);
+extern int jarrayToInt(JNIEnv *env, jobjectArray array, int pos, PTR pointer, SQLINTEGER maxSize);
+extern int jarrayToShort(JNIEnv *env, jobjectArray array, int pos, PTR pointer, SQLINTEGER maxSize);
+
 
 
 template<typename... Types> int java_callback(const std::function<int(JNIEnv*,Types... )>& func,Types... arg1){

@@ -120,7 +120,7 @@ RETCODE JStatement::describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSM
 				//return SQL_ERROR;
 				*nameLength = 0;
 			} else {
-				*nameLength = colName2.size();
+				*nameLength = colName2.size()*sizeof(SQLWCHAR);
 				memcpy(colName,colName2.c_str(),len1);
 			}
 		} else {
@@ -135,11 +135,11 @@ RETCODE JStatement::describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSM
 			*colSize = jinteger_to_jint(env,val);
 		}
 		if(decimalDigits != NULL) {
-			val = env->GetObjectArrayElement(data, 3);
+			val = env->GetObjectArrayElement(data, 4);
 			*decimalDigits = jinteger_to_jint(env,val);
 		}
 		if(nullable != NULL) {
-			val = env->GetObjectArrayElement(data, 3);
+			val = env->GetObjectArrayElement(data, 5);
 			*nullable = jinteger_to_jint(env,val);
 		}
 		if(env->ExceptionCheck()){
@@ -162,7 +162,6 @@ RETCODE getColumnAttribute_18(JNIEnv* env, jobjectArray data, SQLPOINTER rgbDesc
 		}
 		memcpy(rgbDesc,wcharData.c_str(),(wcharData.size()+1)* sizeof(SQLWCHAR));
 		*pcbDesc = wcharData.size()* sizeof(SQLWCHAR);
-
 	}
 	if(numberValue!= NULL){
 		*numberValue = 0;
@@ -198,10 +197,27 @@ RETCODE JStatement::getColumnAttribute(SQLUSMALLINT icol, SQLUSMALLINT fDescType
 			ret = getColumnAttribute_18(env,data,rgbDesc,cbDescMax,pcbDesc, numberValue);
 			break;
 		case SQL_COLUMN_UPDATABLE:
+			if(pcbDesc != NULL)
+				*pcbDesc  =4;
+			if(numberValue !=NULL)
+				*numberValue = 0;
+			break;
 		case SQL_COLUMN_LENGTH://col size
 		case SQL_COLUMN_UNSIGNED://unsigned
 			ret = getLongFromArrayObject(env,data,0, numberValue);
 			break;
+		case SQL_DESC_BASE_TABLE_NAME:
+		case SQL_DESC_BASE_COLUMN_NAME:
+		case SQL_DESC_CATALOG_NAME:
+		case SQL_DESC_SCHEMA_NAME:
+		case SQL_COLUMN_AUTO_INCREMENT:
+		case 1212:
+			if(pcbDesc != NULL)
+				*pcbDesc  =0;
+			if(numberValue !=NULL)
+				*numberValue = 0;
+			break;
+
 		default:
 			ret = SQL_ERROR;
 		}
@@ -231,8 +247,12 @@ RETCODE JStatement::getStatementAttr(SQLINTEGER	fAttribute, PTR		rgbValue, SQLIN
 		case SQL_CONCURRENCY:
 			ret = getLongFromArrayObject(env,data,0, (SQLINTEGER *)rgbValue);
 			break;
+//		case SQL_ATTR_PARAMSET_SIZE:
+//			if(stringLength != NULL)
+//				*stringLength  =0;
+//			break;
 		default:
-			ret = SQL_ERROR;
+			ret = SQL_SUCCESS;
 		}
 		return ret;
 	};

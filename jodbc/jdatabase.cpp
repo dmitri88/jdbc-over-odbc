@@ -156,8 +156,8 @@ RETCODE JDatabase::setConnectionParameter(ustring prop, ustring val) {
 RETCODE JDatabase::getConnectionAttr(SQLINTEGER fAttribute, SQLPOINTER rgbValue, SQLINTEGER cbValueMax, SQLINTEGER *pcbValue)
 {
 	int ret;
-	std::function<int(JNIEnv*,JDatabase* connection,SQLINTEGER fAttribute, SQLINTEGER	cbValueMax)> func1;
-	func1 = [](JNIEnv *env,JDatabase* connection, SQLINTEGER fAttribute, SQLINTEGER	cbValueMax) {
+	std::function<int(JNIEnv*,JDatabase* connection,SQLINTEGER fAttribute, SQLPOINTER rgbValue,SQLINTEGER	cbValueMax, SQLINTEGER *pcbValue)> func1;
+	func1 = [](JNIEnv *env,JDatabase* connection, SQLINTEGER fAttribute, SQLPOINTER rgbValue,SQLINTEGER	cbValueMax, SQLINTEGER *pcbValue) {
 		jlong attr = (long long)fAttribute;
 		jlong val = (long long)cbValueMax;
 		jmethodID method = env->GetMethodID(connection->entrypointClass, "getConnectionAttr", "(J)[Ljava/lang/Object;");
@@ -167,9 +167,14 @@ RETCODE JDatabase::getConnectionAttr(SQLINTEGER fAttribute, SQLPOINTER rgbValue,
 			LOG(1,"Error: JDatabase::getConnectionAttr\n");
 			return SQL_ERROR;
 		}
+		switch(fAttribute){
+		case SQL_CURRENT_QUALIFIER :
+			jarrayToString(env, data, 0, rgbValue, cbValueMax,pcbValue);
+			break;
+		}
 		return SQL_SUCCESS;
 	};
-	ret = java_callback(func1,this,fAttribute,cbValueMax);
+	ret = java_callback(func1,this,fAttribute,rgbValue,cbValueMax,pcbValue);
 	return ret;
 }
 
@@ -189,10 +194,51 @@ RETCODE JDatabase::getInfo(SQLUSMALLINT fInfoType, PTR rgbInfoValue, SQLSMALLINT
 			return SQL_ERROR;
 		}
 		switch(fInfoType){
+		case SQL_NEED_LONG_DATA_LEN:
+		case SQL_MULT_RESULT_SETS:
+		case SQL_DRIVER_NAME:
+		case SQL_ODBC_VER:
+		case SQL_DRIVER_ODBC_VER:
+		case SQL_DBMS_VER:
 		case SQL_DBMS_NAME:
+		case SQL_OWNER_TERM:
+		case SQL_IDENTIFIER_QUOTE_CHAR:
+		case SQL_CATALOG_NAME_SEPARATOR:
 			ret = jarrayToString(env, data, 0, rgbInfoValue, cbInfoValueMax,&retSize);
 			if(pcbInfoValue!=NULL)
 				*pcbInfoValue = retSize;
+			break;
+
+		case SQL_DEFAULT_TXN_ISOLATION:
+		case SQL_KEYSET_CURSOR_ATTRIBUTES1:
+		case SQL_STATIC_CURSOR_ATTRIBUTES1:
+		case SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES1:
+		case SQL_KEYSET_CURSOR_ATTRIBUTES2:
+		case SQL_SCROLL_OPTIONS:
+		case SQL_SCROLL_CONCURRENCY:
+		case SQL_DYNAMIC_CURSOR_ATTRIBUTES1:
+		case SQL_GETDATA_EXTENSIONS:
+		case SQL_TXN_ISOLATION_OPTION:
+		case SQL_BOOKMARK_PERSISTENCE:
+		case SQL_LOCK_TYPES:
+		case SQL_STATIC_SENSITIVITY:
+		case SQL_STATIC_CURSOR_ATTRIBUTES2:
+		case SQL_CURSOR_COMMIT_BEHAVIOR:
+		case SQL_CURSOR_ROLLBACK_BEHAVIOR:
+		case SQL_TXN_CAPABLE:
+		case SQL_ACTIVE_STATEMENTS:
+		case SQL_POS_OPERATIONS:
+			ret = jarrayToInt(env, data, 0, rgbInfoValue, cbInfoValueMax);
+			if(pcbInfoValue!=NULL)
+				*pcbInfoValue = 4;
+			break;
+		case SQL_MAX_CATALOG_NAME_LEN:
+		case SQL_MAX_COLUMN_NAME_LEN:
+		case SQL_MAX_SCHEMA_NAME_LEN:
+		case SQL_MAX_TABLE_NAME_LEN:
+			ret = jarrayToShort(env, data, 0, rgbInfoValue, cbInfoValueMax);
+			if(pcbInfoValue!=NULL)
+				*pcbInfoValue = 2;
 			break;
 		default:
 			ret = SQL_ERROR;

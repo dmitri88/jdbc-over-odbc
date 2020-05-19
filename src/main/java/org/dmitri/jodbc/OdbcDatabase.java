@@ -158,11 +158,29 @@ public class OdbcDatabase {
 		ret = new Object[1];
 		
 		switch (attr) {
+		case SQL_DRIVER_NAME:
+			ret[0] = "msodbcsql17.dl";
+			break;
 		case SQL_ODBC_VER:
 			ret[0] = "03.80.0000";
 			break;
 		case SQL_DRIVER_ODBC_VER:
 			ret[0] = "03.80";
+			break;
+		case SQL_NEED_LONG_DATA_LEN:
+			ret[0] = "Y";
+			break;
+		case SQL_MULT_RESULT_SETS :
+			ret[0] = "Y";
+			break;
+		case SQL_OWNER_TERM :
+			ret[0] = "owner";
+			break;
+		case SQL_IDENTIFIER_QUOTE_CHAR:
+			ret[0] = "\"";
+			break;
+		case SQL_QUALIFIER_NAME_SEPARATOR:
+			ret[0] = ".";
 			break;
 		case SQL_DBMS_NAME:
 			try {
@@ -172,7 +190,83 @@ public class OdbcDatabase {
 				throw new RuntimeException(e);
 			}
 			break;
-
+		case SQL_DBMS_VER:
+			try {
+				DatabaseMetaData metaData = this.connection.getMetaData();
+				ret[0] = metaData.getDatabaseProductVersion();
+			} catch (SQLException e) {
+				throw new RuntimeException(e);
+			}
+			break;
+		case SQL_POS_OPERATIONS:
+			ret[0] = Integer.valueOf(0x1f);
+			break;
+		case SQL_STATIC_SENSITIVITY :
+			ret[0] = Integer.valueOf(5);
+			break;
+		case SQL_LOCK_TYPES:
+			ret[0] = Integer.valueOf(1);
+			break;
+		case SQL_GETDATA_EXTENSIONS:
+			ret[0] = Integer.valueOf(4);
+			break;
+		case SQL_TXN_ISOLATION_OPTION:
+			ret[0] = Integer.valueOf(0x2f);
+			break;
+		case SQL_BOOKMARK_PERSISTENCE:
+			ret[0] = Integer.valueOf(0x52);
+			break;
+		case SQL_SCROLL_OPTIONS:
+			ret[0] = Integer.valueOf(0x17);
+			break;
+		case SQL_SCROLL_CONCURRENCY:
+			ret[0] = Integer.valueOf(0xf);
+			break;
+		case SQL_DYNAMIC_CURSOR_ATTRIBUTES1:
+			ret[0] = Integer.valueOf(0x0001FE47);
+			break;
+		case SQL_KEYSET_CURSOR_ATTRIBUTES1:
+			ret[0] = Integer.valueOf(0x000FFE4F);
+			break;
+		case SQL_STATIC_CURSOR_ATTRIBUTES1:
+			ret[0] = Integer.valueOf(0x0008124F);
+			break;
+		case SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES1:
+			ret[0] = Integer.valueOf(0x0000E001);
+			break;
+		case SQL_KEYSET_CURSOR_ATTRIBUTES2:
+			ret[0] = Integer.valueOf(0x00011FDF);
+			break;
+		case SQL_STATIC_CURSOR_ATTRIBUTES2:
+			ret[0] = Integer.valueOf(0x00001F81);
+			break;
+		case SQL_CURSOR_COMMIT_BEHAVIOR:
+			ret[0] = Integer.valueOf(1);
+			break;
+		case SQL_CURSOR_ROLLBACK_BEHAVIOR:
+			ret[0] = Integer.valueOf(1);
+			break;
+		case SQL_TXN_CAPABLE:
+			ret[0] = Integer.valueOf(2);
+			break;
+		case SQL_MAX_CATALOG_NAME_LEN:
+			ret[0] = Integer.valueOf(128);
+			break;
+		case SQL_MAX_COLUMN_NAME_LEN:
+			ret[0] = Integer.valueOf(128);
+			break;
+		case SQL_MAX_SCHEMA_NAME_LEN:
+			ret[0] = Integer.valueOf(128);
+			break;
+		case SQL_MAX_TABLE_NAME_LEN:
+			ret[0] = Integer.valueOf(128);
+			break;
+		case SQL_ACTIVE_STATEMENTS:
+			ret[0] = Integer.valueOf(1);
+			break;
+		case SQL_DEFAULT_TXN_ISOLATION:
+			ret[0] = Integer.valueOf(2);
+			break;
 		default:
 			throw new RuntimeException("getInfo missing field "+(attr!=null?attr:fieldId));
 		}  	

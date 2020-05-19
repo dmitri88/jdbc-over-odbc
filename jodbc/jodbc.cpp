@@ -69,7 +69,7 @@ RETCODE SQL_API SQLColAttributeW(HSTMT hstmt,SQLUSMALLINT icol, SQLUSMALLINT fDe
 		return SQL_INVALID_HANDLE;
 	JStatement* stmt = (JStatement*)hstmt;
 	ret = stmt->getColumnAttribute(icol,fDescType,rgbDesc,cbDescMax,pcbDesc,pfDesc);
-	LOG(5, "Exiting SQLColAttributeW %d (%p,%d,%d)\n",ret,hstmt,icol,fDescType);
+	LOG(5, "Exiting SQLColAttributeW %d (%p,%d,%d,%d,%d)\n",ret,hstmt,icol,fDescType,POINTER_VAL(pcbDesc),POINTER_VAL(pfDesc));
 	return ret;
 }
 
@@ -314,26 +314,11 @@ RETCODE  SQL_API SQLGetInfoW(HDBC hdbc,SQLUSMALLINT fInfoType, PTR rgbInfoValue,
 	//try java version
 	ret = database->getInfo(fInfoType, rgbInfoValue, cbInfoValueMax, pcbInfoValue);
 	if(ret == SQL_SUCCESS){
-		LOG(5, "Exiting SQLGetInfoW %d (%p,%hhi,%p,%hi,%d)\n",ret,hdbc,fInfoType,rgbInfoValue,cbInfoValueMax,*pcbInfoValue);
+		LOG(5, "Exiting SQLGetInfoW %d (%p,%hhi,%p,%hi,%d)\n",ret,hdbc,fInfoType,rgbInfoValue,cbInfoValueMax,POINTER_VAL(pcbInfoValue));
 		return ret;
 	}
 	//local fallback
 	switch(fInfoType){
-		//case SQL_DBMS_NAME:
-		//	SPRINTF_FIXED(data, "Microsoft SQL Server");
-		//	p = data;
-		//	break;
-		case SQL_DRIVER_NAME:	/* ODBC 1.0 */
-			p = "jodbc";
-			break;
-		case SQL_ODBC_VER:
-			SPRINTF_FIXED(data, "%02x.%02x.0000", ODBCVER / 256, ODBCVER % 256);
-			p = data;
-			break;
-		case SQL_DRIVER_ODBC_VER:
-			SPRINTF_FIXED(data, "%02x.%02x", ODBCVER / 256, ODBCVER % 256);
-			p = data;
-			break;
 		case SQL_POS_OPERATIONS:		/* ODBC 2.0 */
 			len = 4;
 			value = (SQL_POS_POSITION | SQL_POS_REFRESH);
@@ -448,14 +433,6 @@ RETCODE  SQL_API SQLGetInfoW(HDBC hdbc,SQLUSMALLINT fInfoType, PTR rgbInfoValue,
 				value |= (SQL_CA2_CRC_EXACT
 				);
 			break;
-		case SQL_NEED_LONG_DATA_LEN:	/* ODBC 2.0 */
-
-			/*
-			 * Don't need the length, SQLPutData can handle any size and
-			 * multiple calls
-			 */
-			p = "N";
-			break;
 		case SQL_CURSOR_ROLLBACK_BEHAVIOR:		/* ODBC 1.0 */
 			len = 2;
 //			if (!ci->drivers.use_declarefetch)
@@ -476,24 +453,6 @@ RETCODE  SQL_API SQLGetInfoW(HDBC hdbc,SQLUSMALLINT fInfoType, PTR rgbInfoValue,
 	}
 
 
-	if (p)
-	{
-		/* char/binary data */
-		len = strlen(p);
-
-		if (rgbInfoValue)
-		{
-			//if (CC_is_in_unicode_driver(conn))
-			{
-				len = utf8_to_ucs2(p, len, (SQLWCHAR *) rgbInfoValue, cbInfoValueMax / WCLEN);
-				len *= WCLEN;
-			}
-		}
-		//else if (CC_is_in_unicode_driver(conn))
-		//	len *= WCLEN;
-	}
-	else
-	{
 		/* numeric data */
 		if (rgbInfoValue)
 		{
@@ -502,11 +461,6 @@ RETCODE  SQL_API SQLGetInfoW(HDBC hdbc,SQLUSMALLINT fInfoType, PTR rgbInfoValue,
 			else if (len == sizeof(SQLINTEGER))
 				*((SQLUINTEGER *) rgbInfoValue) = (SQLUINTEGER) value;
 		}
-	}
-
-	if (pcbInfoValue)
-		*pcbInfoValue = (SQLSMALLINT) len;
-
 	LOG(5, "Exiting SQLGetInfoW %d (%p,%hhi,%p,%hi)\n",ret,hdbc,fInfoType,rgbInfoValue,cbInfoValueMax);
 	return SQL_SUCCESS;
 }
@@ -527,7 +481,7 @@ RETCODE SQL_API SQLGetConnectAttrW(
 
 	ret = conn->getConnectionAttr(fAttribute,rgbValue,cbValueMax,pcbValue);
 
-	LOG(5, "Entering SQLGetConnectAttrW %d (%p,%li,%p,%li)\n",ret,hdbc,fAttribute,rgbValue,cbValueMax);
+	LOG(5, "Exiting SQLGetConnectAttrW %d (%p,%li,%p,%li,%d)\n",ret,hdbc,fAttribute,rgbValue,cbValueMax,POINTER_VAL(pcbValue));
 	return ret;
 
 }

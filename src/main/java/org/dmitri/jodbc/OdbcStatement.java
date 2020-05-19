@@ -74,9 +74,17 @@ public class OdbcStatement {
 			ret[0]=rsmd.getColumnName(colNum);
 			ret[1]=rsmd.getColumnLabel(colNum);
 			ret[2]=Integer.valueOf(rsmd.getColumnType(colNum));
-			ret[3] = Integer.valueOf(0); // colSize
+			
 			ret[4] = Integer.valueOf(0); //decimalDigits
-			ret[5] = Integer.valueOf(rsmd.isNullable(colNum));
+			//ret[5] = Integer.valueOf(rsmd.isNullable(colNum));
+			ret[5] = 1;
+			switch(Integer.valueOf(rsmd.getColumnType(colNum))) {
+			case 4:
+				ret[3] = 10; // colSize
+				break;
+			default:
+				ret[3] = Integer.valueOf(0); // colSize
+			}
 			
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
@@ -96,8 +104,16 @@ public class OdbcStatement {
 			return getColumnAttributeByUpdatable(colNum);
 		case SQL_COLUMN_LABEL:
 			return getColumnAttributeByLabel(colNum);
+		case SQL_COLUMN_AUTO_INCREMENT:
+		case SQL_DESC_BASE_COLUMN_NAME:
+		case SQL_DESC_BASE_TABLE_NAME:
+		case SQL_COLUMN_OWNER_NAME:
+		case SQL_COLUMN_QUALIFIER_NAME:
+		case UNKNOWN_SHIT_1:
+			return new Object[] {};
 		default:
-			throw new RuntimeException("undefined attr: "+attr);
+			//throw new RuntimeException("undefined attr: "+attr);
+			return new Object[] {};
 		}
 		//return null;
 	}
@@ -105,7 +121,7 @@ public class OdbcStatement {
 	
 	private Object[] getColumnAttributeByUpdatable(int colNum) {
 		Object[] ret = new Object[1];
-			ret[0]=Long.valueOf(0);
+			ret[0]=Long.valueOf(4);
 		return ret;	
 	}
 
@@ -149,8 +165,9 @@ public class OdbcStatement {
 		log.debug("JAVA getStatementAttribute {} {}",statementId, attr!=null?attr:attrInt);
 		switch(attr) {
 		case SQL_CURSOR_TYPE:
+			return new Object[] { Long.valueOf(0)};//SQL_CURSOR_FORWARD_ONLY
 		case SQL_CONCURRENCY:
-			return new Object[] { Long.valueOf(0)};
+			return new Object[] { Long.valueOf(1)};//SQL_CONCUR_READ_ONLY
 		default:
 				return null;
 		}
