@@ -191,7 +191,7 @@ RETCODE SQL_API SQLGetFunctions(HDBC ConnectionHandle, SQLUSMALLINT FunctionId, 
 	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLERROR);  10 deprecated */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLEXECDIRECT);		/* 11 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLEXECUTE);		/* 12 */
-	//SQL_FUNC_ESET(pfExists, SQL_API_SQLFETCH);	/* 13 */
+	SQL_FUNC_ESET(pfExists, SQL_API_SQLFETCH);	/* 13 */
 	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLFREECONNECT); 14 deprecated */
 	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLFREEENV); 15 deprecated */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLFREESTMT);		/* 16 */

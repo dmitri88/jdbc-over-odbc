@@ -139,6 +139,7 @@ public class OdbcStatement {
 		return ret;
 	}
 	
+	@SneakyThrows
 	public Object[]  getColumnAttribute(int colNum,int descType) {
 		OdbcColumnAttribute attr = OdbcColumnAttribute.valueOf(descType);
 		log.debug("JAVA getColumnAttribute {} {} {}",statementId, colNum, attr!=null?attr:descType);
@@ -152,6 +153,8 @@ public class OdbcStatement {
 		case SQL_COLUMN_LABEL:
 			return getColumnAttributeByLabel(colNum);
 		case SQL_COLUMN_AUTO_INCREMENT:
+			ResultSetMetaData rsmd = result.getMetaData();
+			return new Object[] {rsmd.isAutoIncrement(colNum) ? 1L:0L };
 		case SQL_DESC_BASE_COLUMN_NAME:
 		case SQL_DESC_BASE_TABLE_NAME:
 		case SQL_COLUMN_OWNER_NAME:

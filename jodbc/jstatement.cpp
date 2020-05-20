@@ -211,13 +211,14 @@ RETCODE JStatement::getColumnAttribute(SQLUSMALLINT icol, SQLUSMALLINT fDescType
 			break;
 		case SQL_COLUMN_LENGTH://col size
 		case SQL_COLUMN_UNSIGNED://unsigned
+		case SQL_COLUMN_AUTO_INCREMENT:
 			ret = getLongFromArrayObject(env,data,0, numberValue);
 			break;
 		case SQL_DESC_BASE_TABLE_NAME:
 		case SQL_DESC_BASE_COLUMN_NAME:
 		case SQL_DESC_CATALOG_NAME:
 		case SQL_DESC_SCHEMA_NAME:
-		case SQL_COLUMN_AUTO_INCREMENT:
+
 		case 1212:
 			if(pcbDesc != NULL)
 				*pcbDesc  =0;
@@ -326,12 +327,18 @@ RETCODE bindResultToVariable(JNIEnv* env,jobject val, SQLSMALLINT type, PTR valu
 		}
 		*((SQLINTEGER*)valuePtr)=(SQLINTEGER)jlong_to_long(env, val);
 		break;
-
-
+	case SQL_C_ULONG:
+		if(bufLength<4){
+			LOG(1,"bind variable buffer is too small %d needed 4",bufLength);
+			return SQL_SUCCESS;
+		}
+		*((SQLUINTEGER*)valuePtr)=(SQLUINTEGER)jlong_to_long(env, val);
+		break;
 	default:
+		LOG(1,"type not supported %d",type);
 		throw std::runtime_error("type not supported");
 	}
-	printf("vaL %p %d    ",val,*(long *)valuePtr);
+	LOG(5,"bindResultToVariable %p %li\n",val,*(long *)valuePtr);
 	return SQL_SUCCESS;
 }
 
