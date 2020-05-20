@@ -1,5 +1,7 @@
 package org.dmitri.jodbc.dto;
 
+import org.dmitri.jodbc.enums.OdbcBindType;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -7,7 +9,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class BoundParameter {
 	private int column;	
-	private int type;	
+	private OdbcBindType type;	
 	private Long buffer;
 	private Long bufLen;
 	private Long retBuffer;

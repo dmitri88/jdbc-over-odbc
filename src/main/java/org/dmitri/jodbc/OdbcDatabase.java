@@ -29,49 +29,49 @@ public class OdbcDatabase {
 	private String url;
 	@Setter
 	private String driverclass;
-	
+
 	@Getter
 	private Connection connection;
-	private Map<Long,OdbcStatement> statements =  new HashMap<>();
-	
-	private Map<Integer,DataTypeInfo> infos = new HashMap<>();
-	
-	
+	private Map<Long, OdbcStatement> statements = new HashMap<>();
+
+	private Map<Integer, DataTypeInfo> infos = new HashMap<>();
+
 	public void connect() {
-        try
-        {
-            Class.forName(driverclass);
-        } 
-        catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        log.debug("JDBC Driver Registered!");
-        try {
-            connection = DriverManager
-                .getConnection(url, user, password);
-            log.debug("SQL Connection to database established!");
- 
-        } catch (SQLException e) {
-        	log.error("Connection Failed! Check output console");
-        	throw new RuntimeException(e);
-        } 		
+		try {
+			Class.forName(driverclass);
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		log.debug("JDBC Driver Registered!");
+		try {
+			connection = DriverManager.getConnection(url, user, password);
+			log.debug("SQL Connection to database established!");
+
+		} catch (SQLException e) {
+			log.error("Connection Failed! Check output console");
+			throw new RuntimeException(e);
+		}
 	}
+
 	public DataTypeInfo getTypeInfo(int typeId) {
-		if(infos.size()>0) {
+		if (infos.size() > 0) {
 			return infos.get(typeId);
 		}
-		
+
 		try {
+
 			DatabaseMetaData metaData = this.connection.getMetaData();
+
 			ResultSet set = metaData.getTypeInfo();
-			while(set.next()) {
-				DataTypeInfo info =  new DataTypeInfo();
+			while (set.next()) {
+				DataTypeInfo info = new DataTypeInfo();
 				info.setName(set.getString("TYPE_NAME"));
 				info.setTypeId(set.getInt("DATA_TYPE"));
-				info.setUnsigned(set.getBoolean("UNSIGNED_ATTRIBUTE") );
-				
+				info.setUnsigned(set.getBoolean("UNSIGNED_ATTRIBUTE"));
+				// info.setSize(set.getInt("COLUMN_SIZE"));
+
 				infos.put(info.getTypeId(), info);
-				
+
 			}
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
@@ -79,84 +79,81 @@ public class OdbcDatabase {
 		return infos.get(typeId);
 	}
 
-
 	public void createStatement(long stmtId) {
-		log.debug("JAVA createStatement "+stmtId);
-		statements.put(stmtId,new OdbcStatement(this,stmtId));
+		log.debug("JAVA createStatement " + stmtId);
+		statements.put(stmtId, new OdbcStatement(this, stmtId));
 	}
 
-
 	public OdbcStatement getStatement(long stmtId) {
-		if(stmtId == 0) {
+		if (stmtId == 0) {
 			return null;
 		}
 		return statements.get(stmtId);
 	}
 
-
 	public void setConnectionAttribute(long attr, long cbValue) {
-		log.debug("JAVA setConnectionAttribute {} {}",attr,cbValue);
-		
+		log.debug("JAVA setConnectionAttribute {} {}", attr, cbValue);
+
 	}
 
-
 	public Object[] getConnectionAttribute(long attrLong) {
-		OdbcConnectionAttribute attr = OdbcConnectionAttribute.valueOf((int)attrLong);
-		log.debug("JAVA getConnectionAttribute {} ", attr!=null?attr:attrLong);
-		
-		if(attr==null) {
-			log.warn("UNDEFINED connection attibute:"+attrLong);
+		OdbcConnectionAttribute attr = OdbcConnectionAttribute.valueOf((int) attrLong);
+		log.debug("JAVA getConnectionAttribute {} ", attr != null ? attr : attrLong);
+
+		if (attr == null) {
+			log.warn("UNDEFINED connection attibute:" + attrLong);
 			return new Object[0];
 		}
-		
+
 		Object[] ret;
 		ret = new Object[1];
-		
+
 		switch (attr) {
 		case SQL_CURRENT_QUALIFIER:
 			ret[0] = getCurrentCatalog();
 			break;
 
 		default:
-			log.warn("UNDEFINED connection attibute:"+attr);
+			log.warn("UNDEFINED connection attibute:" + attr);
 			return new Object[0];
-		}  	
-		return ret;			
+		}
+		return ret;
 	}
+
 	private String getCurrentCatalog() {
 		Statement statement = null;
 		ResultSet resultSet = null;
 		try {
 			statement = this.connection.createStatement();
 			resultSet = statement.executeQuery("SELECT DB_NAME()");
-			if(resultSet.next()) {
+			if (resultSet.next()) {
 				return resultSet.getString(1);
 			}
-		
+
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
-		}	finally {
-			if(resultSet != null)
+		} finally {
+			if (resultSet != null)
 				try {
 					resultSet.close();
 				} catch (SQLException e) {
 				}
-			if(statement != null)
+			if (statement != null)
 				try {
 					statement.close();
 				} catch (SQLException e) {
-				}			
+				}
 		}
 		return null;
 	}
+
 	public Object[] getInfo(int fieldId) {
 		OdbcInfoType attr = OdbcInfoType.valueOf(fieldId);
-		log.debug("JAVA getInfo {} ", attr!=null?attr:fieldId);
-		
-		
+		log.debug("JAVA getInfo {} ", attr != null ? attr : fieldId);
+
 		Object[] ret;
 		ret = new Object[1];
-		
+
 		switch (attr) {
 		case SQL_DRIVER_NAME:
 			ret[0] = "msodbcsql17.dl";
@@ -170,10 +167,10 @@ public class OdbcDatabase {
 		case SQL_NEED_LONG_DATA_LEN:
 			ret[0] = "Y";
 			break;
-		case SQL_MULT_RESULT_SETS :
+		case SQL_MULT_RESULT_SETS:
 			ret[0] = "Y";
 			break;
-		case SQL_OWNER_TERM :
+		case SQL_OWNER_TERM:
 			ret[0] = "owner";
 			break;
 		case SQL_IDENTIFIER_QUOTE_CHAR:
@@ -201,7 +198,7 @@ public class OdbcDatabase {
 		case SQL_POS_OPERATIONS:
 			ret[0] = Integer.valueOf(0x1f);
 			break;
-		case SQL_STATIC_SENSITIVITY :
+		case SQL_STATIC_SENSITIVITY:
 			ret[0] = Integer.valueOf(5);
 			break;
 		case SQL_LOCK_TYPES:
@@ -268,12 +265,13 @@ public class OdbcDatabase {
 			ret[0] = Integer.valueOf(2);
 			break;
 		default:
-			throw new RuntimeException("getInfo missing field "+(attr!=null?attr:fieldId));
-		}  	
+			throw new RuntimeException("getInfo missing field " + (attr != null ? attr : fieldId));
+		}
 		return ret;
 	}
+
 	public String getNativeSql(String sql) {
-		if(sql == null)
+		if (sql == null)
 			return "";
 		return sql;
 	}

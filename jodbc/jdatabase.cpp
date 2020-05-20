@@ -331,7 +331,14 @@ RETCODE JDatabase::preInitConnection(){
 			return SQL_ERROR;RETCODE libraryInit(SQLWCHAR *szConnStrIn, SQLSMALLINT cbConnStrIn);
 		}
 		jmethodID createInstanceMethod = env->GetStaticMethodID(cls, "getInstance", "()Lorg/dmitri/jodbc/JniEntrypoint;");
-		jobject obj = env->NewGlobalRef(env->CallStaticObjectMethod(cls, createInstanceMethod));
+		jobject o1 =env->CallStaticObjectMethod(cls, createInstanceMethod);
+		if(o1 == NULL || env->ExceptionCheck()){
+			env->ExceptionDescribe();
+			LOG(1,"Error: JDatabase::libraryInit 2\n");
+			return SQL_ERROR;
+		}
+
+		jobject obj = env->NewGlobalRef(o1);
 		if(obj == NULL || env->ExceptionCheck()){
 			env->ExceptionDescribe();
 			LOG(1,"Error: JDatabase::libraryInit 2\n");

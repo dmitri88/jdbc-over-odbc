@@ -89,16 +89,26 @@ std::string from_jstring(JNIEnv *env,jstring jstr){
 jint jinteger_to_jint(JNIEnv *env,jobject intObj){
 	jclass clz = env->FindClass("java/lang/Integer");
 	jmethodID method = env->GetMethodID(clz, "intValue", "()I");
-	return env->CallIntMethod(intObj, method);
+	jint ret = env->CallIntMethod(intObj, method);
+	if(env->ExceptionCheck()){
+		env->ExceptionDescribe();
+		throw std::runtime_error("jinteger_to_jint failed");
+	}
+	return ret;
 }
 
 jlong jlong_to_long(JNIEnv *env, jobject longObj){
 	jclass clz = env->FindClass("java/lang/Long");
 	jmethodID method = env->GetMethodID(clz, "longValue", "()J");
-	return env->CallLongMethod(longObj, method);
+	jlong ret = env->CallLongMethod(longObj, method);
+	if(env->ExceptionCheck()){
+		env->ExceptionDescribe();
+		throw std::runtime_error("jlong_to_long failed");
+	}
+	return ret;
 }
 
-int jarrayToString(JNIEnv *env, jobjectArray data, int pos, PTR pointer, SQLUINTEGER maxSize,SQLUINTEGER *retSize){
+RETCODE jarrayToString(JNIEnv *env, jobjectArray data, int pos, PTR pointer, SQLUINTEGER maxSize,SQLUINTEGER *retSize){
 	int ret;
 	jstring val=(jstring) env->GetObjectArrayElement(data, pos);
 	ustring wcharData = ustring(from_jstring(env,val));
@@ -117,27 +127,43 @@ int jarrayToString(JNIEnv *env, jobjectArray data, int pos, PTR pointer, SQLUINT
 	return ret;
 }
 
-int jarrayToInt(JNIEnv *env, jobjectArray data, int pos, PTR pointer, SQLUINTEGER maxSize) {
+RETCODE jarrayToInt(JNIEnv *env, jobjectArray data, int pos, jint* pointer){
 	if(pointer == NULL)
 		return SQL_ERROR;
-	if(maxSize<4){
-		return SQL_ERROR;
-	}
 	jobject val=(jobject) env->GetObjectArrayElement(data, pos);
 	jint ret = jinteger_to_jint(env,val);
-	*((jint*)pointer)=ret;
+	*pointer=ret;
 	return SQL_SUCCESS;
 }
 
-int jarrayToShort(JNIEnv *env, jobjectArray data, int pos, PTR pointer, SQLUINTEGER maxSize) {
+RETCODE jarrayToInt(JNIEnv *env, jobjectArray data, int pos, PTR pointer, SQLUINTEGER maxSize) {
+	if(maxSize<4){
+		return SQL_ERROR;
+	}
+	return jarrayToInt(env, data, pos, (jint*)pointer);
+}
+
+RETCODE jarrayToShort(JNIEnv *env, jobjectArray data, int pos, jshort* pointer){
 	if(pointer == NULL)
 		return SQL_ERROR;
+	jobject val=(jobject) env->GetObjectArrayElement(data, pos);
+	jshort ret = (jshort)jinteger_to_jint(env,val);
+	*pointer=ret;
+	return SQL_SUCCESS;
+}
+
+RETCODE jarrayToShort(JNIEnv *env, jobjectArray data, int pos, PTR pointer, SQLUINTEGER maxSize) {
 	if(maxSize<2){
 		return SQL_ERROR;
 	}
-	jobject val=(jobject) env->GetObjectArrayElement(data, pos);
-	short  ret = (short)jinteger_to_jint(env,val);
+	return jarrayToShort(env, data, pos, (jshort*)pointer);
+}
 
-	*((short*)pointer)=ret;
+RETCODE jarrayToLong(JNIEnv *env, jobjectArray data, int pos, jlong* pointer){
+	if(pointer == NULL)
+		return SQL_ERROR;
+	jobject val=(jobject) env->GetObjectArrayElement(data, pos);
+	jlong ret = (jlong)jlong_to_long(env,val);
+	*pointer=ret;
 	return SQL_SUCCESS;
 }

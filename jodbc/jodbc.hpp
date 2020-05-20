@@ -17,6 +17,7 @@ extern "C" RETCODE SQL_API SQLDescribeColW(HSTMT hstm, SQLUSMALLINT colnum, SQLW
 extern "C" RETCODE SQL_API SQLDisconnect(HDBC hdbc);
 extern "C" RETCODE SQL_API SQLDriverConnectW(HDBC hdbc, HWND hwnd, SQLWCHAR *szConnStrIn, SQLSMALLINT cbConnStrIn, SQLWCHAR *szConnStrOut, SQLSMALLINT cbConnStrOutMax, SQLSMALLINT *pcbConnStrOut, SQLUSMALLINT fDriverCompletion);
 extern "C" RETCODE SQL_API SQLExecDirectW(HSTMT hstm, SQLWCHAR * sql, SQLINTEGER length) ;
+extern "C" RETCODE SQL_API SQLFetch(HSTMT hstm);
 extern "C" RETCODE SQL_API SQLFreeHandle(SQLSMALLINT HandleType, SQLHANDLE Handle);
 extern "C" RETCODE SQL_API SQLFreeStmt(HSTMT hstm, SQLUSMALLINT Option);
 extern "C" RETCODE SQL_API SQLGetConnectAttrW(SQLHDBC hdbc, SQLINTEGER fAttribute, SQLPOINTER rgbValue, SQLINTEGER cbValueMax, SQLINTEGER *pcbValue);

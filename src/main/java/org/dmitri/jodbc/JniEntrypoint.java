@@ -3,6 +3,7 @@ package org.dmitri.jodbc;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import org.dmitri.jodbc.enums.OdbcBindType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -141,6 +142,14 @@ public class JniEntrypoint {
 		if(stmt == null) {
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
-		stmt.bindColumn(column, type, dataPtr, size, retLength);
+		stmt.bindColumn(column, OdbcBindType.valueOf(type), dataPtr, size, retLength);
+	}
+	
+	public Object[] fetch(long stmtId) {
+		OdbcStatement stmt = database.getStatement(stmtId);
+		if(stmt == null) {
+			throw new RuntimeException("statement not found "+ stmtId);
+		}
+		return stmt.fetch();
 	}
 }

@@ -4,16 +4,18 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.dmitri.jodbc.dto.BoundParameter;
-import org.dmitri.jodbc.dto.DataTypeInfo;
+import org.dmitri.jodbc.enums.OdbcBindType;
 import org.dmitri.jodbc.enums.OdbcColumnAttribute;
 import org.dmitri.jodbc.enums.OdbcFreeStatement;
 import org.dmitri.jodbc.enums.OdbcStatementAttribute;
+import org.dmitri.jodbc.enums.OdbcStatus;
 
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -25,7 +27,9 @@ public class OdbcStatement {
 	
 	private PreparedStatement statement;
 	private ResultSet result;
-	private Map<Integer,BoundParameter> bindParameters =  new HashMap<>();
+	private List<BoundParameter> bindParameters =  new ArrayList<>();
+	
+	//private int fetchSize = 1;
 
 	public void freeResource(long option) {
 		log.debug("JAVA freeResource {} {}",statementId,option);
@@ -65,9 +69,19 @@ public class OdbcStatement {
 	public void execDirect(String sql) {
 		log.debug("JAVA execDirect {} {}",statementId,sql);
 		try {
+			if(result!=null)
+				result.close();
+			if(statement !=null)
+				statement.close();
+		} catch (Exception e) {
+		}
+		
+		try {
+			
 			statement = database.getConnection().prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 			result = statement.executeQuery();
 		} catch (SQLException e) {
+			log.error("execDirect error",e);
 			throw new RuntimeException(e);
 		}
 		
@@ -86,6 +100,7 @@ public class OdbcStatement {
 		    result.beforeFirst();
 		}
 		catch(Exception ex) {
+			log.error("getRowCount error",ex);
 		    return 0;
 		}
 		return size;		
@@ -97,6 +112,7 @@ public class OdbcStatement {
 			ResultSetMetaData rsmd = result.getMetaData();
 			columnsNumber = rsmd.getColumnCount();
 		} catch (SQLException e) {
+			log.error("getResultColumnCount error",e);
 			throw new RuntimeException(e);
 		}
 		return columnsNumber;
@@ -113,16 +129,11 @@ public class OdbcStatement {
 			
 			ret[4] = Integer.valueOf(0); //decimalDigits
 			//ret[5] = Integer.valueOf(rsmd.isNullable(colNum));
-			ret[5] = 1;
-			switch(Integer.valueOf(rsmd.getColumnType(colNum))) {
-			case 4:
-				ret[3] = 10; // colSize
-				break;
-			default:
-				ret[3] = Integer.valueOf(0); // colSize
-			}
+			ret[5] = rsmd.isNullable(colNum);
+			ret[3] = Integer.valueOf(getColumnAttributeByLength(colNum).intValue());
 			
 		} catch (SQLException e) {
+			log.error("describeColumn error",e);
 			throw new RuntimeException(e);
 		}
 		return ret;
@@ -135,7 +146,7 @@ public class OdbcStatement {
 		case SQL_COLUMN_UNSIGNED:
 			return getColumnAttributeByUnsigned(colNum);
 		case SQL_COLUMN_LENGTH:
-			return getColumnAttributeByLength(colNum);
+			return new Object[] {getColumnAttributeByLength(colNum)};
 		case SQL_COLUMN_UPDATABLE:
 			return getColumnAttributeByUpdatable(colNum);
 		case SQL_COLUMN_LABEL:
@@ -164,24 +175,22 @@ public class OdbcStatement {
 		Object[] ret = new Object[1];
 		try {
 			ResultSetMetaData rsmd = result.getMetaData();
-			int typeid = rsmd.getColumnType(colNum);
-			DataTypeInfo typeInfo = this.database.getTypeInfo(typeid);
-			ret[0]=Long.valueOf(typeInfo.isUnsigned()?1:0);
+			ret[0]=Long.valueOf(rsmd.isSigned(colNum)?1:0);
 		} catch (SQLException e) {
+			log.error("getColumnAttributeByUnsigned error",e);
 			throw new RuntimeException(e);
 		}
 		return ret;	
 	}
 
-	private Object[] getColumnAttributeByLength(int colNum) {
-		Object[] ret = new Object[1];
+	private Long getColumnAttributeByLength(int colNum) {
 		try {
 			ResultSetMetaData rsmd = result.getMetaData();
-			ret[0]=Long.valueOf(rsmd.getColumnDisplaySize(colNum));
+			return Long.valueOf(rsmd.getPrecision(colNum));
 		} catch (SQLException e) {
+			log.error("getColumnAttributeByLength error",e);
 			throw new RuntimeException(e);
 		}
-		return ret;	
 	}
 
 	private Object[]  getColumnAttributeByLabel(int colNum) {
@@ -190,11 +199,13 @@ public class OdbcStatement {
 			ResultSetMetaData rsmd = result.getMetaData();
 			ret[0]=rsmd.getColumnLabel(colNum);
 		} catch (SQLException e) {
+			log.error("getColumnAttributeByLabel error",e);
 			throw new RuntimeException(e);
 		}
 		return ret;	
 	}
 
+	@SneakyThrows
 	public Object[] getStatementAttribute(int attrInt) {
 		OdbcStatementAttribute attr = OdbcStatementAttribute.valueOf(attrInt);
 		log.debug("JAVA getStatementAttribute {} {}",statementId, attr!=null?attr:attrInt);
@@ -203,20 +214,109 @@ public class OdbcStatement {
 			return new Object[] { Long.valueOf(0)};//SQL_CURSOR_FORWARD_ONLY
 		case SQL_CONCURRENCY:
 			return new Object[] { Long.valueOf(1)};//SQL_CONCUR_READ_ONLY
+		case SQL_ATTR_ROW_ARRAY_SIZE:
+			return new Object[] { Long.valueOf(statement.getFetchSize())};
 		default:
 			log.warn("UNDEFINED statement attibute:"+attr);
 				return null;
 		}
 	}
 
+	@SneakyThrows
 	public void setStatementAttribute(int attrInt, long data) {
 		OdbcStatementAttribute attr = OdbcStatementAttribute.valueOf(attrInt);
 		log.debug("JAVA setStatementAttribute {} {} {}",statementId, attr!=null?attr:attrInt,data);
+		switch (attr) {
+		case SQL_ATTR_ROW_ARRAY_SIZE:
+			statement.setFetchSize((int)data);
+			//fetchSize = (int)data;
+			break;
+
+		default:
+			log.warn("setStatementAttribute NOT FOUND "+attr);
+			break;
+		}
 	}
 	
-	public void bindColumn(int column,int type, long dataPtr,long size, long retLength) {
+	public void bindColumn(int column,OdbcBindType type, long dataPtr,long size, long retLength) {
 		log.debug("JAVA bindColumn {} {} {} {} {} {}",statementId, column,type,dataPtr,size,retLength);
-		bindParameters.put(column, new BoundParameter(column, type,dataPtr, size, retLength));
+		bindParameters.add(new BoundParameter(column, type,dataPtr, size, retLength));
 	}
+	@SneakyThrows
+	public Object[] fetch() {
+		log.debug("JAVA fetch {}}",statementId);
+			if(statement == null || statement.isClosed()) {
+				log.error("fetch: invalid statement");
+				return fetchError(OdbcStatus.SQL_ERROR);
+			}
+		if(result == null) {
+			log.error("fetch: invalid result");
+			return fetchError(OdbcStatus.SQL_ERROR);
+		}
+		if(result.isClosed()) {
+			log.error("fetch: result is closed");
+			return fetchError(OdbcStatus.SQL_ERROR);
+		}
+		if(!result.next()) {
+			return fetchError(OdbcStatus.SQL_NO_DATA);
+		}
+		if(bindParameters.size() ==0) {
+			return fetchError(OdbcStatus.SQL_SUCCESS);
+		}
+		
+		int ELEMENTS_PER_PARAMETER = 5;
+		int paramCount = bindParameters.size();
+		Object[] ret = new Object[2+paramCount*ELEMENTS_PER_PARAMETER];
+		ret[0] = Integer.valueOf(OdbcStatus.SQL_SUCCESS.getType());
+		ret[1] = Integer.valueOf(paramCount);
+		
+		int offset = 2;
+		for(int i=0;i<paramCount;i++) {
+			BoundParameter parameter = bindParameters.get(i);
+			ret[offset] = Integer.valueOf(parameter.getType().getType());
+			ret[offset+1] = Long.valueOf(parameter.getBuffer());
+			ret[offset+2] = Long.valueOf(parameter.getBufLen());
+			ret[offset+3] = Long.valueOf(parameter.getRetBuffer());
+			ret[offset+4] = fetchColumn(result,parameter.getColumn(),parameter.getType());
+			offset +=ELEMENTS_PER_PARAMETER;
+		}
+		
+		return ret;
+	}
+	
+	private Object fetchColumn(ResultSet rs, int column, OdbcBindType type) throws SQLException {
+		switch(type) {
+		case SQL_C_CHAR:
+		case SQL_C_LONG:
+		case SQL_C_SHORT:
+		case SQL_C_TINYINT:
+		case SQL_C_SSHORT:
+		case SQL_C_SLONG:
+		case SQL_C_STINYINT:
+		case SQL_C_USHORT:
+		case SQL_C_ULONG:
+		case SQL_C_UTINYINT:
+			long long1 = rs.getLong(column);
+			if(rs.wasNull())
+				return null;
+			return Long.valueOf(long1);
+			
+		//case SQL_C_DOUBLE:
+		//case SQL_C_FLOAT:
+		
+			default:
+				throw new RuntimeException("fetch type not supported: "+type);
+				
+		}
+		//return null;
+	}
+	
+	private Object[] fetchError(OdbcStatus error) {
+		Object[] ret =  new Object[2];
+		ret[0] = Integer.valueOf(error.getType());
+		ret[1] = Integer.valueOf(0);
+		return ret;
+	}
+	
 
 }

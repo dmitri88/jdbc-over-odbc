@@ -23,6 +23,7 @@ public:
 	RETCODE getStatementAttr(SQLINTEGER	fAttribute, PTR		rgbValue, SQLINTEGER	cbValueMax, SQLINTEGER	*stringLength);
 	RETCODE setStatementAttr(SQLINTEGER	fAttribute, PTR		rgbValue, SQLINTEGER	cbValueMax);
 	RETCODE bindColumn(SQLUSMALLINT column, SQLSMALLINT type, PTR value, SQLUINTEGER bufLength, SQLUINTEGER * strLengthOrIndex);
+	RETCODE fetch();
 private:
 	JDatabase* connection;
 };

@@ -2,6 +2,7 @@ package org.dmitri.jodbc;
 
 import java.lang.reflect.InvocationTargetException;
 
+import org.dmitri.jodbc.enums.OdbcColumnAttribute;
 import org.junit.jupiter.api.Test;
 
 public class JniEntrypointTest {
@@ -27,7 +28,9 @@ public class JniEntrypointTest {
 		instance.createStatement(stmtId);
 		instance.execDirect(stmtId, "select * from INFORMATION_SCHEMA.SESSIONS");
 		
-		instance.getColumnAttribute(stmtId, 1, 8);
+		instance.getColumnAttribute(stmtId, 1, OdbcColumnAttribute.SQL_COLUMN_UNSIGNED.getType());
+		instance.getColumnAttribute(stmtId, 1, OdbcColumnAttribute.SQL_COLUMN_LENGTH.getType());
+		instance.getColumnAttribute(stmtId, 2, OdbcColumnAttribute.SQL_COLUMN_LENGTH.getType());
 	}
 
 }

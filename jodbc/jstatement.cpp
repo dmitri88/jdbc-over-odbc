@@ -111,7 +111,11 @@ RETCODE JStatement::describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSM
 		jlong stmt = (long long)statement;
 		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "describeColumn", "(JI)[Ljava/lang/Object;");
 		jobjectArray data = (jobjectArray)env->CallObjectMethod(statement->connection->entrypointObj, method, stmt,colnum);
-
+		if(env->ExceptionCheck()){
+			env->ExceptionDescribe();
+			LOG(1,"Error: JStatement::describeColumn\n");
+			return SQL_ERROR;
+		}
 		if(colName != NULL) {
 			jstring jcolName=(jstring) env->GetObjectArrayElement(data, 0);
 			ustring colName2 = ustring(from_jstring(env,jcolName));
@@ -121,7 +125,7 @@ RETCODE JStatement::describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSM
 				//return SQL_ERROR;
 				*nameLength = 0;
 			} else {
-				*nameLength = colName2.size()*sizeof(SQLWCHAR);
+				*nameLength = colName2.size();
 				//memcpy(colName,colName2.c_str(),len1);
 				ret = strcpy(colName,bufLength,colName2);
 			}
@@ -269,7 +273,7 @@ RETCODE JStatement::setStatementAttr(SQLINTEGER	fAttribute, PTR		rgbValue, SQLIN
 		int ret = SQL_SUCCESS;
 		jobject val;
 		jlong stmt = (long long)statement;
-		jlong data = 0;
+		jlong data = (long long)rgbValue;
 		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "setStatementAttribute", "(JIJ)V");
 		env->CallVoidMethod(statement->connection->entrypointObj, method, stmt,fAttribute,data);
 		if(env->ExceptionCheck()){
@@ -302,5 +306,82 @@ RETCODE JStatement::bindColumn(SQLUSMALLINT column, SQLSMALLINT type, PTR value,
 		return ret;
 	};
 	ret = java_callback(func1,this,column,type,value,bufLength,strLengthOrIndex);
+	return ret;
+}
+
+RETCODE bindResultToVariable(JNIEnv* env,jobject val, SQLSMALLINT type, PTR valuePtr,SQLUINTEGER bufLength,SQLUINTEGER * strLengthOrIndex){
+
+	if(val == NULL){
+		*strLengthOrIndex = SQL_NULL_DATA;
+		return SQL_SUCCESS;
+	}
+	*strLengthOrIndex = 0;
+
+	switch(type){
+
+	case SQL_C_SLONG://32 bit signed
+		if(bufLength<4){
+			LOG(1,"bind variable buffer is too small %d needed 4",bufLength);
+			return SQL_SUCCESS;
+		}
+		*((SQLINTEGER*)valuePtr)=(SQLINTEGER)jlong_to_long(env, val);
+		break;
+
+
+	default:
+		throw std::runtime_error("type not supported");
+	}
+	printf("vaL %p %d    ",val,*(long *)valuePtr);
+	return SQL_SUCCESS;
+}
+
+RETCODE JStatement::fetch(){
+	int ret;
+	std::function<int(JNIEnv* env,JStatement* statement)> func1;
+	func1 = [](JNIEnv *env,JStatement* statement) {
+		int ret = SQL_SUCCESS;
+		jobject val;
+		jlong stmt = (long long)statement;
+		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "fetch", "(J)[Ljava/lang/Object;");
+		jobjectArray data = (jobjectArray)env->CallObjectMethod(statement->connection->entrypointObj, method, stmt);
+		if(env->ExceptionCheck()){
+			env->ExceptionDescribe();
+			LOG(1,"Error: JStatement::fetch");
+			return SQL_ERROR;
+		}
+		jint fetchRet;
+		ret = jarrayToInt(env,data,0,&fetchRet);
+		if(ret)
+			return ret;
+		if(!SQL_SUCCEEDED(fetchRet))
+			return fetchRet;
+		jint paramCount;
+		ret = jarrayToInt(env,data,1,&paramCount);
+		if(ret)
+			return ret;
+		if(paramCount == 0)
+			return ret;
+
+		for(int i=0;i<paramCount;i++){
+			SQLSMALLINT type;
+			PTR valuePtr;
+			SQLUINTEGER bufLength;
+			SQLUINTEGER * strLengthOrIndex;
+			jarrayToShort(env, data, 2+5*i, &type);
+			jarrayToLong(env, data, 2+5*i+1, (jlong*)&valuePtr);
+			jarrayToLong(env, data, 2+5*i+2, (jlong*)&bufLength);
+			jarrayToLong(env, data, 2+5*i+3, (jlong*)&strLengthOrIndex);
+			jobject val=(jobject) env->GetObjectArrayElement(data, 2+5*i+4);
+			ret = bindResultToVariable(env, val, type, valuePtr,bufLength, strLengthOrIndex);
+			if(env->ExceptionCheck()){
+				env->ExceptionDescribe();
+				LOG(1,"Error: JStatement::fetch");
+				return SQL_ERROR;
+			}
+			LOG(5, "fetch param (%d,%d,%p,%li,%p)\n",i,type,valuePtr,bufLength,strLengthOrIndex);
+		}
+		return ret;
+	};
+	ret = java_callback(func1,this);
 	return ret;
 }

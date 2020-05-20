@@ -267,6 +267,7 @@ SQLHANDLE create_statement(SQLHANDLE hDbc){
 
 void test_queries(SQLHANDLE hDbc){
 	int ret;
+	SQLINTEGER valInt;
 	SQLINTEGER retCount;
 	SQLHANDLE hStmt;
 	char data[1024];
@@ -282,9 +283,63 @@ void test_queries(SQLHANDLE hDbc){
 	ret = SQLExecDirectW(hStmt, (SQLWCHAR*)sql.c_str(),sql.size());
 	assert(ret == 0);
 
+	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_ROW_ARRAY_SIZE, (PTR)0x1, -6);
+	assert(ret == 0);
 
-	SQLBindCol(hStmt, 1, SQL_C_WCHAR, (PTR)data, /*SQLUINTEGER bufLength*/100, /*SQLUINTEGER * strLengthOrIndex*/&retCount);
+	//ret = SQLBindCol(hStmt, 1, SQL_C_WCHAR, (PTR)data, /*SQLUINTEGER bufLength*/100, /*SQLUINTEGER * strLengthOrIndex*/&retCount);
+	//assert(ret == 0);
+
+	ret = SQLBindCol(hStmt, 1, SQL_C_SLONG, (PTR)&valInt, /*SQLUINTEGER bufLength*/4, /*SQLUINTEGER * strLengthOrIndex*/&retCount);
+	assert(ret == 0);
+
+	ret = SQLFetch(hStmt);
+	assert(ret == 0);
+	//assert(retCount == 4);
+	assert(valInt == 2);
+
 }
+
+void test_attributes_3(SQLHANDLE hStmt){
+	int ret;
+	SQLLEN retCount;
+	SQLSMALLINT colCount;
+
+	ustring sql = ustring(L"SELECT *  FROM t_package");
+	ret = SQLExecDirectW(hStmt, (SQLWCHAR*)sql.c_str(),sql.size());
+	assert(ret == 0);
+
+	ret = SQLRowCount(hStmt, &retCount);
+	assert(ret == 0);
+	assert(retCount == 2);
+	ret = SQLNumResultCols(hStmt, &colCount);
+	assert(ret == 0);
+	assert(colCount == 23);
+
+	SQLWCHAR colName[1024];
+	SQLSMALLINT bufLength;
+	SQLSMALLINT nameLength;
+	SQLSMALLINT dataType;
+	SQLULEN colSize;
+	SQLSMALLINT decimalDigits;
+	SQLSMALLINT nullable;
+	ret = SQLDescribeColW(hStmt, 1, colName, 1024, &nameLength, &dataType, &colSize, &decimalDigits, &nullable);
+	assert(ret == 0);
+	assert(nameLength == 10);
+	assert(dataType == 4);
+	assert(colSize == 10);
+	assert(decimalDigits == 0);
+	assert(nullable == 0);
+
+	ret = SQLDescribeColW(hStmt, 2, colName, 1024, &nameLength, &dataType, &colSize, &decimalDigits, &nullable);
+	assert(ret == 0);
+	assert(nameLength == 4);
+	assert(dataType == -9);
+	assert(colSize == 255);
+	assert(decimalDigits == 0);
+	assert(nullable == 1);
+
+}
+
 void test_attributes(SQLHANDLE hStmt){
 	int ret;
 	SQLLEN retCount;
@@ -310,11 +365,12 @@ void test_attributes(SQLHANDLE hStmt){
 	SQLSMALLINT nullable;
 	ret = SQLDescribeColW(hStmt, 1, colName, 1024, &nameLength, &dataType, &colSize, &decimalDigits, &nullable);
 	assert(ret == 0);
-	assert(nameLength == 22);
+	assert(nameLength == 11);
 	assert(dataType == 4);
 	assert(colSize == 10);
 	assert(decimalDigits == 0);
 	assert(nullable == 1);
+
 
 	char data[1024];
 	SQLINTEGER numberValue;
@@ -323,13 +379,13 @@ void test_attributes(SQLHANDLE hStmt){
 	assert(bufLength == 22);
 	assert(ustring((SQLWCHAR*)data).compare(ustring(L"RecordCount"))==0);
 
-	ret = SQLColAttributeW(hStmt, 1, 3, data, 1024, &bufLength, &numberValue);
+	ret = SQLColAttributeW(hStmt, 1, SQL_COLUMN_LENGTH, data, 1024, &bufLength, &numberValue);
 	assert(ret == 0);
-	assert(numberValue == 11);
+	assert(numberValue == 10);
 
 	ret = SQLColAttributeW(hStmt, 1, SQL_DESC_UNSIGNED, data, 1024, &bufLength, &numberValue);
 	assert(ret == 0);
-	assert(numberValue == 0);
+	assert(numberValue == 1);
 
 	ret = SQLColAttributeW(hStmt, 1, SQL_DESC_UPDATABLE, data, 1024, &bufLength, &numberValue);
 	assert(ret == 0);
@@ -372,6 +428,9 @@ void test_attributes(SQLHANDLE hStmt){
 	ret = SQLSetStmtAttrW(hStmt, 11, data, 1024);
 	assert(ret == 0);
 
+	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_ROW_ARRAY_SIZE, (PTR)0x1, -6);
+	assert(ret == 0);
+
 
 	//6 SQL_CURSOR_TYPE  7 SQL_CONCURRENCY
 	ret = SQLGetStmtAttrW(hStmt, SQL_CURSOR_TYPE, data, 1024, &numberValue);
@@ -405,6 +464,7 @@ int main(int argc, char **argv) {
 
 	test_attributes2(hDbc,hStmt);
 	test_attributes(hStmt);
+	test_attributes_3(hStmt);
 	test_queries(hDbc);
 
 	printf("\ntesting-done\n");

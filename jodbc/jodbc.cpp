@@ -191,7 +191,7 @@ RETCODE SQL_API SQLGetFunctions(HDBC ConnectionHandle, SQLUSMALLINT FunctionId, 
 	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLERROR);  10 deprecated */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLEXECDIRECT);		/* 11 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLEXECUTE);		/* 12 */
-	SQL_FUNC_ESET(pfExists, SQL_API_SQLFETCH);	/* 13 */
+	//SQL_FUNC_ESET(pfExists, SQL_API_SQLFETCH);	/* 13 */
 	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLFREECONNECT); 14 deprecated */
 	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLFREEENV); 15 deprecated */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLFREESTMT);		/* 16 */
@@ -274,7 +274,7 @@ RETCODE SQL_API SQLGetFunctions(HDBC ConnectionHandle, SQLUSMALLINT FunctionId, 
 	}
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLSETENVATTR);		/* 1019 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLSETSTMTATTR);	/* 1020 */
-	SQL_FUNC_ESET(pfExists, SQL_API_SQLFETCHSCROLL);	/* 1021 */
+	//SQL_FUNC_ESET(pfExists, SQL_API_SQLFETCHSCROLL);	/* 1021 */
 	//if (0 != (ALLOW_BULK_OPERATIONS & ci->updatable_cursors))
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLBULKOPERATIONS);	/* 24 */
 
@@ -605,5 +605,18 @@ RETCODE	SQL_API SQLBindCol(HSTMT hstmt, SQLUSMALLINT column, SQLSMALLINT type, P
 	ret = stmt->bindColumn(column,type,value,(SQLUINTEGER)bufLength,(SQLUINTEGER*)strLengthOrIndex);
 
 	LOG(5, "Exiting SQLBindCol %d (%d,%d,%p,%li,%d)\n",ret,column,type,value,bufLength,POINTER_VAL(strLengthOrIndex));
+	return ret;
+}
+RETCODE SQL_API SQLFetch(HSTMT hstmt) {
+	RETCODE	ret;
+
+	LOG(5, "Entering SQLFetch (%p)\n",hstmt);
+	if(!hstmt)
+		return SQL_INVALID_HANDLE;
+	JStatement* stmt = (JStatement*)hstmt;
+
+	ret = stmt->fetch();
+
+	LOG(5, "Exiting SQLFetch %d (%p)\n",ret,hstmt);
 	return ret;
 }

@@ -8,4 +8,5 @@ public class DataTypeInfo {
 	private String name;
 	private int typeId;
 	private boolean unsigned;
+	private int size;
 }
