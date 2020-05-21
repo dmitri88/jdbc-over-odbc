@@ -79,6 +79,22 @@ public class JniEntrypoint {
 		stmt.execDirect(sql);
 	}
 	
+	public void execute(long stmtId) {
+		OdbcStatement stmt = database.getStatement(stmtId);
+		if(stmt == null) {
+			throw new RuntimeException("statement not found "+ stmtId);
+		}
+		stmt.execute();
+	}	
+	
+	public void prepareStatement(long stmtId,String sql) {
+		OdbcStatement stmt = database.getStatement(stmtId);
+		if(stmt == null) {
+			throw new RuntimeException("statement not found "+ stmtId);
+		}
+		stmt.prepareStatement(sql);
+	}
+	
 	public long getRowCount(long stmtId) {
 		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {

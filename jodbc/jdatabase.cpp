@@ -128,11 +128,11 @@ RETCODE JDatabase::connect(SQLWCHAR *szConnStrIn, SQLSMALLINT cbConnStrIn) {
 //				this->addPath(val.utf8());
 //			}
 			ret = this->setConnectionParameter(prop, val);
-			if(ret)
+			if(ret){
 				return SQL_ERROR;
+			}
 		}
 	}
-
 	return this->javaConnect();
 }
 

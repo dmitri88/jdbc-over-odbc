@@ -92,9 +92,13 @@ SQLHANDLE create_database(){
 	ret = SQLGetFunctions(hDbc, 999, enabledFuncs);
 	printf("SQLGetFunctions result %d\n", ret);
 
+	ustring dsn = ustring(L"Simba");
+	ret = SQLConnectW(hDbc,(SQLWCHAR*)dsn.c_str(),dsn.size(),NULL,0,NULL,0);
+	assert(ret == 0);
+
 	ret = SQLDriverConnectW(hDbc, NULL, utf8_to_unicode("DSN=Simba;"), 0, NULL,
 			0, &retConnStrLength, 0);
-	printf("SQLDriverConnectW result %d\n", ret);
+	assert(ret == 0);
 
 	ret = SQLGetInfoW(hDbc, SQL_DBMS_NAME, NULL, 0, &retLen);
 	assert(ret == 0);
@@ -280,7 +284,10 @@ void test_queries(SQLHANDLE hDbc){
 	assert(ret == 0);
 
 	ustring sql = ustring(L"SELECT COUNT(*) AS RecordCount FROM t_package");
-	ret = SQLExecDirectW(hStmt, (SQLWCHAR*)sql.c_str(),sql.size());
+	ret = SQLPrepareW(hStmt, (SQLWCHAR*)sql.c_str(),sql.size());
+	assert(ret == 0);
+
+	ret = SQLExecute(hStmt);
 	assert(ret == 0);
 
 	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_ROW_ARRAY_SIZE, (PTR)0x1, -6);
@@ -385,6 +392,21 @@ void test_attributes(SQLHANDLE hStmt){
 	assert(bufLength == 22);
 	assert(ustring((SQLWCHAR*)data).compare(ustring(L"RecordCount"))==0);
 
+	ret = SQLColAttributeW(hStmt, 1, SQL_DESC_LABEL, data, 1024, NULL, NULL);
+	assert(ret == 0);
+	assert(bufLength == 22);
+	assert(ustring((SQLWCHAR*)data).compare(ustring(L"RecordCount"))==0);
+
+
+	ret = SQLColAttributeW(hStmt, 1, SQL_COLUMN_DISPLAY_SIZE, data, 1024, &bufLength, NULL);
+	assert(ret == 0);
+	assert(bufLength == SQL_IS_INTEGER);
+	assert(*(SQLINTEGER*)data == 11);
+
+	ret = SQLColAttributeW(hStmt, 1, SQL_COLUMN_DISPLAY_SIZE, NULL, 0, NULL, &numberValue);
+	assert(ret == 0);
+	assert(numberValue == 11);
+
 	ret = SQLColAttributeW(hStmt, 1, SQL_COLUMN_LENGTH, data, 1024, &bufLength, &numberValue);
 	assert(ret == 0);
 	assert(numberValue == 10);
@@ -428,7 +450,7 @@ void test_attributes(SQLHANDLE hStmt){
 	assert(bufLength == 0);
 	assert(numberValue == 0);
 
-	ret = SQLColAttributeW(hStmt, 1, SQL_DESC_AUTO_UNIQUE_VALUE, data, 1024, &bufLength, &numberValue);
+	ret = SQLColAttributeW(hStmt, 1, SQL_DESC_AUTO_UNIQUE_VALUE, NULL, 0, &bufLength, &numberValue);
 	assert(ret == 0);
 	assert(bufLength == 0);
 	assert(numberValue == 0);
@@ -444,23 +466,24 @@ void test_attributes(SQLHANDLE hStmt){
 
 
 	//6 SQL_CURSOR_TYPE  7 SQL_CONCURRENCY
-	ret = SQLGetStmtAttrW(hStmt, SQL_CURSOR_TYPE, data, 1024, &numberValue);
+	ret = SQLGetStmtAttrW(hStmt, SQL_CURSOR_TYPE, data, SQL_IS_SMALLINT, NULL);
 	assert(ret == 0);
 	assert(numberValue == 0);
-	assert((*(SQLINTEGER*)data) == 0);
-	ret = SQLGetStmtAttrW(hStmt, SQL_CONCURRENCY, data, 1024, &numberValue);
+	assert((*(SQLSMALLINT*)data) == 0);
+	ret = SQLGetStmtAttrW(hStmt, SQL_CONCURRENCY, data, SQL_IS_INTEGER, &numberValue);
 	assert(ret == 0);
 	assert(numberValue == 0);
 	assert((*(SQLINTEGER*)data) == 1);
-//	ret = SQLGetStmtAttrW(hStmt, SQL_DESC_BASE_COLUMN_NAME, data, 258, &numberValue);
-//	assert(ret == 0);
-//	assert(numberValue == 0);
-//	assert((*(SQLINTEGER*)data) == 0);
+	//ret = SQLGetStmtAttrW(hStmt, SQL_DESC_BASE_COLUMN_NAME, data, 258, &numberValue);
+	//assert(ret == 0);
+	//assert(numberValue == 0);
+	//assert((*(SQLWCHAR*)data) == 0);
 
 
 }
 
 int main(int argc, char **argv) {
+	printf(" ");
 	test_java_callback();
 
 	int ret;

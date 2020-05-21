@@ -16,7 +16,8 @@ extern "C" RETCODE SQL_API SQLConnectW(HDBC hdbc, SQLWCHAR *ServerName, SQLSMALL
 extern "C" RETCODE SQL_API SQLDescribeColW(HSTMT hstm, SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSMALLINT bufLength, SQLSMALLINT *nameLength, SQLSMALLINT * dataType, SQLUINTEGER * colSize, SQLSMALLINT * decimalDigits, SQLSMALLINT * nullable);
 extern "C" RETCODE SQL_API SQLDisconnect(HDBC hdbc);
 extern "C" RETCODE SQL_API SQLDriverConnectW(HDBC hdbc, HWND hwnd, SQLWCHAR *szConnStrIn, SQLSMALLINT cbConnStrIn, SQLWCHAR *szConnStrOut, SQLSMALLINT cbConnStrOutMax, SQLSMALLINT *pcbConnStrOut, SQLUSMALLINT fDriverCompletion);
-extern "C" RETCODE SQL_API SQLExecDirectW(HSTMT hstm, SQLWCHAR * sql, SQLINTEGER length) ;
+extern "C" RETCODE SQL_API SQLExecDirectW(HSTMT hstm, SQLWCHAR * sql, SQLINTEGER length);
+extern "C" RETCODE SQL_API SQLExecute(SQLHSTMT hstm);
 extern "C" RETCODE SQL_API SQLFetch(HSTMT hstm);
 extern "C" RETCODE SQL_API SQLFreeHandle(SQLSMALLINT HandleType, SQLHANDLE Handle);
 extern "C" RETCODE SQL_API SQLFreeStmt(HSTMT hstm, SQLUSMALLINT Option);
@@ -29,6 +30,7 @@ extern "C" RETCODE SQL_API SQLGetTypeInfoW(HSTMT	hstm, SQLSMALLINT	DataType);
 extern "C" RETCODE SQL_API SQLMoreResults(HSTMT hstmt);
 extern "C" RETCODE SQL_API SQLNativeSqlW(HDBC hdbc,SQLWCHAR *szSqlStrIn,SQLINTEGER	cbSqlStrIn,SQLWCHAR *szSqlStr,SQLINTEGER	cbSqlStrMax,SQLINTEGER   *pcbSqlStr);
 extern "C" RETCODE SQL_API SQLNumResultCols(HSTMT hstm, SQLSMALLINT * retCount);
+extern "C" RETCODE SQL_API SQLPrepareW(SQLHSTMT hstm, SQLWCHAR *text, SQLINTEGER length);
 extern "C" RETCODE SQL_API SQLRowCount(HSTMT hstm, SQLLEN * retCount);
 extern "C" RETCODE SQL_API SQLSetConnectAttrW(HDBC hdbc, SQLINTEGER	fAttribute, PTR		rgbValue, SQLINTEGER	cbValue);
 extern "C" RETCODE SQL_API SQLSetStmtAttrW(SQLHSTMT hstmt, SQLINTEGER	fAttribute, PTR		rgbValue, SQLINTEGER	cbValueMax);

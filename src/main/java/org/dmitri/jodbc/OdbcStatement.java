@@ -69,6 +69,29 @@ public class OdbcStatement {
 
 	public void execDirect(String sql) {
 		log.debug("JAVA execDirect {} {}", statementId, sql);
+		prepareStatement(sql);
+		execute();
+
+	}
+	
+	public void execute() {
+		log.debug("JAVA execute {}", statementId);
+		try {
+			if (result != null)
+				result.close();
+		} catch (Exception e) {
+		}
+
+		try {
+			result = statement.executeQuery();
+		} catch (SQLException e) {
+			log.error("execDirect error", e);
+			throw new RuntimeException(e);
+		}
+	}
+	
+	public void prepareStatement(String sql) {
+		log.debug("JAVA prepareStatement {} {}", statementId, sql);
 		try {
 			if (result != null)
 				result.close();
@@ -78,14 +101,13 @@ public class OdbcStatement {
 		}
 
 		try {
+			result = null;
 			statement = database.getConnection().prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE,
 					ResultSet.CONCUR_READ_ONLY);
-			result = statement.executeQuery();
 		} catch (SQLException e) {
 			log.error("execDirect error", e);
 			throw new RuntimeException(e);
 		}
-
 	}
 
 	public long getRowCount() {
@@ -142,49 +164,67 @@ public class OdbcStatement {
 	@SneakyThrows
 	public Object[] getColumnAttribute(int colNum, int descType) {
 		OdbcColumnAttribute attr = OdbcColumnAttribute.valueOf(descType);
+		Object[] ret;
 		log.debug("JAVA getColumnAttribute {} {} {}", statementId, colNum, attr != null ? attr : descType);
 		switch (attr) {
 		case SQL_COLUMN_UNSIGNED:
-			return getColumnAttributeByUnsigned(colNum);
+			ret = new Object[] {getColumnAttributeByUnsigned(colNum)};
+			break;
+		case SQL_COLUMN_DISPLAY_SIZE:
+			ret = new Object[] { getColumnAttributeByDisplaySize(colNum) };
+			break;
 		case SQL_COLUMN_LENGTH:
-			return new Object[] { getColumnAttributeByLength(colNum) };
+			ret = new Object[] { getColumnAttributeByLength(colNum) };
+			break;
 		case SQL_COLUMN_UPDATABLE:
-			return getColumnAttributeByUpdatable(colNum);
+			ret = new Object[] {getColumnAttributeByUpdatable(colNum)};
+			break;
 		case SQL_COLUMN_LABEL:
-			return getColumnAttributeByLabel(colNum);
+			ret = new Object[] {getColumnAttributeByLabel(colNum)};
+			break;
 		case SQL_COLUMN_AUTO_INCREMENT:
 			ResultSetMetaData rsmd = result.getMetaData();
-			return new Object[] { rsmd.isAutoIncrement(colNum) ? 1L : 0L };
+			ret = new Object[] { rsmd.isAutoIncrement(colNum) ? 1L : 0L };
+			break;
 		case SQL_COLUMN_TABLE_NAME:
 		case SQL_DESC_BASE_COLUMN_NAME:
 		case SQL_DESC_BASE_TABLE_NAME:
 		case SQL_COLUMN_OWNER_NAME:
 		case SQL_COLUMN_QUALIFIER_NAME:
-			return new Object[] {new String("")};
+			ret = new Object[] {new String("")};
+			break;
 		default:
 			log.warn("UNDEFINED column attibute:" + attr);
 			// throw new RuntimeException("undefined attr: "+attr);
-			return new Object[] {};
+			ret = new Object[] {};
+			break;
 		}
-		// return null;
-	}
-
-	private Object[] getColumnAttributeByUpdatable(int colNum) {
-		Object[] ret = new Object[1];
-		ret[0] = Long.valueOf(4);
 		return ret;
 	}
 
-	private Object[] getColumnAttributeByUnsigned(int colNum) {
-		Object[] ret = new Object[1];
+	private Long getColumnAttributeByDisplaySize(int colNum) {
 		try {
 			ResultSetMetaData rsmd = result.getMetaData();
-			ret[0] = Long.valueOf(rsmd.isSigned(colNum) ? 1 : 0);
+			return Long.valueOf(rsmd.getColumnDisplaySize(colNum));
 		} catch (SQLException e) {
 			log.error("getColumnAttributeByUnsigned error", e);
 			throw new RuntimeException(e);
 		}
-		return ret;
+	}
+
+	private Long getColumnAttributeByUpdatable(int colNum) {
+		log.warn("dummy return for getColumnAttributeByUpdatable");
+		return Long.valueOf(4);
+	}
+
+	private Long getColumnAttributeByUnsigned(int colNum) {
+		try {
+			ResultSetMetaData rsmd = result.getMetaData();
+			return Long.valueOf(rsmd.isSigned(colNum) ? 1 : 0);
+		} catch (SQLException e) {
+			log.error("getColumnAttributeByUnsigned error", e);
+			throw new RuntimeException(e);
+		}
 	}
 
 	private Long getColumnAttributeByLength(int colNum) {
@@ -197,16 +237,16 @@ public class OdbcStatement {
 		}
 	}
 
-	private Object[] getColumnAttributeByLabel(int colNum) {
-		Object[] ret = new Object[1];
+	private String getColumnAttributeByLabel(int colNum) {
 		try {
 			ResultSetMetaData rsmd = result.getMetaData();
-			ret[0] = rsmd.getColumnLabel(colNum);
+			String ret =  rsmd.getColumnLabel(colNum);
+			log.trace("column label: {}",ret);
+			return ret;
 		} catch (SQLException e) {
 			log.error("getColumnAttributeByLabel error", e);
 			throw new RuntimeException(e);
 		}
-		return ret;
 	}
 
 	@SneakyThrows
@@ -335,5 +375,9 @@ public class OdbcStatement {
 			return OdbcStatus.SQL_SUCCESS.getType();
 		return OdbcStatus.SQL_NO_DATA.getType();
 	}
+
+
+
+
 
 }

@@ -68,6 +68,44 @@ RETCODE JStatement::execDirect(ustring sql){
 	return ret;
 }
 
+
+RETCODE JStatement::execute(){
+	int ret;
+	std::function<int(JNIEnv*,JStatement* statement)> func1;
+	func1 = [](JNIEnv *env,JStatement* statement) {
+		jlong stmt = (long long)statement;
+		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "execute", "(J)V");
+		env->CallVoidMethod(statement->connection->entrypointObj, method, stmt);
+		if(env->ExceptionCheck()){
+			env->ExceptionDescribe();
+			LOG(1,"Error: JStatement::execute\n");
+			return SQL_ERROR;
+		}
+		return SQL_SUCCESS;
+	};
+	ret = java_callback(func1,this);
+	return ret;
+}
+
+RETCODE JStatement::prepareStatement(ustring sql){
+	int ret;
+	std::function<int(JNIEnv*,JStatement* statement,ustring sql)> func1;
+	func1 = [](JNIEnv *env,JStatement* statement,ustring sql) {
+		jlong stmt = (long long)statement;
+		jstring jstr = to_jstring(sql);
+		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "prepareStatement", "(JLjava/lang/String;)V");
+		env->CallVoidMethod(statement->connection->entrypointObj, method, stmt, jstr);
+		if(env->ExceptionCheck()){
+			env->ExceptionDescribe();
+			LOG(1,"Error: JStatement::prepareStatement\n");
+			return SQL_ERROR;
+		}
+		return SQL_SUCCESS;
+	};
+	ret = java_callback(func1,this,sql);
+	return ret;
+}
+
 RETCODE JStatement::getRowCount(SQLINTEGER * retCount){
 	int ret;
 	std::function<int(JNIEnv*,JStatement* statement, SQLINTEGER * retCount)> func1;
@@ -159,16 +197,17 @@ RETCODE JStatement::describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSM
 	return ret;
 }
 
-RETCODE getColumnAttribute_18(JNIEnv* env, jobjectArray data, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLINTEGER *numberValue){
+RETCODE getStringFromArrayObject(JNIEnv* env, jobjectArray data, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLINTEGER *numberValue){
 	int ret = SQL_SUCCESS;
 	if(rgbDesc != NULL){
 		jstring val=(jstring) env->GetObjectArrayElement(data, 0);
 		ustring wcharData = ustring(from_jstring(env,val));
-		if(wcharData.size()>(SQLUSMALLINT)cbDescMax){
+		if(wcharData.size()* sizeof(SQLWCHAR)>(SQLUSMALLINT)cbDescMax){
 			return SQL_ERROR;
 		}
 		ret = strcpy((SQLWCHAR*)rgbDesc,cbDescMax/2,wcharData);
-		*pcbDesc = wcharData.size()* sizeof(SQLWCHAR);
+		if(pcbDesc)
+			*pcbDesc = wcharData.size()* sizeof(SQLWCHAR);
 	}
 	if(numberValue!= NULL){
 		*numberValue = 0;
@@ -176,11 +215,54 @@ RETCODE getColumnAttribute_18(JNIEnv* env, jobjectArray data, SQLPOINTER rgbDesc
 	return ret;
 }
 
-RETCODE getLongFromArrayObject(JNIEnv* env, jobjectArray data,int arrayPos, SQLINTEGER * pointer){
-	if(pointer == NULL)
-		return SQL_ERROR;
+RETCODE getLongFromArrayObject(JNIEnv* env, jobjectArray data,int arrayPos, SQLINTEGER * numberData,SQLPOINTER rawData, SQLSMALLINT rawDataMax, SQLSMALLINT  *rawDataType){
 	jobject val=(jobject) env->GetObjectArrayElement(data, arrayPos);
-	*pointer = jlong_to_long(env,val);
+	if(env->ExceptionCheck()){
+		env->ExceptionDescribe();
+		return SQL_ERROR;
+	}
+
+
+	SQLINTEGER valInt = jlong_to_long(env,val);
+	if(numberData) {
+		*numberData = valInt;
+	}
+	if(rawData){
+		int dataType=0;
+		if(rawDataMax<0)
+			dataType =rawDataMax;
+		if((int)rawDataType <0 && dataType==0)
+			dataType =(int)rawDataType;
+
+
+		if(rawDataMax ==4 || dataType == SQL_IS_INTEGER){
+			*rawDataType = SQL_IS_INTEGER;
+			*(SQLINTEGER *)rawData=(SQLINTEGER)valInt;
+		}
+		else if (rawDataMax ==4 || dataType == SQL_IS_UINTEGER){
+			*rawDataType = SQL_IS_UINTEGER;
+			*(SQLUINTEGER *)rawData=(SQLUINTEGER)valInt;
+		}
+		else if(rawDataMax ==2 || dataType == SQL_IS_SMALLINT){
+			*rawDataType = SQL_IS_SMALLINT;
+			*(SQLSMALLINT *)rawData=(SQLSMALLINT)valInt;
+		}
+		else if (rawDataMax ==2 || dataType == SQL_IS_USMALLINT){
+			*rawDataType = SQL_IS_USMALLINT;
+			*(SQLUSMALLINT *)rawData=(SQLUSMALLINT)valInt;
+		}
+		else {
+			LOG(1,"getLongFromArrayObject incorrect size %d",rawDataMax);
+			return SQL_ERROR;
+		}
+
+#define SQL_IS_POINTER							(-4)
+#define SQL_IS_UINTEGER							(-5)
+#define SQL_IS_INTEGER							(-6)
+#define SQL_IS_USMALLINT						(-7)
+#define SQL_IS_SMALLINT							(-8)
+
+	}
 	return SQL_SUCCESS;
 }
 
@@ -201,26 +283,25 @@ RETCODE JStatement::getColumnAttribute(SQLUSMALLINT icol, SQLUSMALLINT fDescType
 			return SQL_ERROR;
 		}
 		switch(fDescType){
-		case SQL_COLUMN_LABEL://label
-			ret = getColumnAttribute_18(env,data,rgbDesc,cbDescMax,pcbDesc, numberValue);
-			break;
 		case SQL_COLUMN_UPDATABLE:
 			if(pcbDesc != NULL)
 				*pcbDesc  =4;
 			if(numberValue !=NULL)
 				*numberValue = 0;
 			break;
+		case SQL_COLUMN_DISPLAY_SIZE:
 		case SQL_COLUMN_LENGTH://col size
 		case SQL_COLUMN_UNSIGNED://unsigned
 		case SQL_COLUMN_AUTO_INCREMENT:
-			ret = getLongFromArrayObject(env,data,0, numberValue);
+			ret = getLongFromArrayObject(env,data,0, numberValue,rgbDesc,4,pcbDesc);
 			break;
+		case SQL_COLUMN_LABEL:
 		case SQL_DESC_BASE_TABLE_NAME:
 		case SQL_DESC_BASE_COLUMN_NAME:
 		case SQL_DESC_CATALOG_NAME:
 		case SQL_DESC_SCHEMA_NAME:
 		case SQL_COLUMN_TABLE_NAME:
-			ret = getColumnAttribute_18(env,data,rgbDesc,cbDescMax,pcbDesc, numberValue);
+			ret = getStringFromArrayObject(env,data,rgbDesc,cbDescMax,pcbDesc, numberValue);
 			break;
 
 
@@ -250,6 +331,7 @@ RETCODE JStatement::getStatementAttr(SQLINTEGER	fAttribute, PTR		rgbValue, SQLIN
 		jlong stmt = (long long)statement;
 		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "getStatementAttribute", "(JI)[Ljava/lang/Object;");
 		jobjectArray data = (jobjectArray)env->CallObjectMethod(statement->connection->entrypointObj, method, stmt,fAttribute);
+		SQLSMALLINT retType=0;
 		if(env->ExceptionCheck()){
 			env->ExceptionDescribe();
 			LOG(1,"Error: JStatement::getStatementAttr");
@@ -258,7 +340,9 @@ RETCODE JStatement::getStatementAttr(SQLINTEGER	fAttribute, PTR		rgbValue, SQLIN
 		switch(fAttribute){
 		case SQL_CURSOR_TYPE:
 		case SQL_CONCURRENCY:
-			ret = getLongFromArrayObject(env,data,0, (SQLINTEGER *)rgbValue);
+			ret = getLongFromArrayObject(env,data,0,NULL, (SQLPOINTER)rgbValue,cbValueMax,&retType);
+			if(stringLength)
+				*stringLength = 0;
 			break;
 //		case SQL_ATTR_PARAMSET_SIZE:
 //			if(stringLength != NULL)

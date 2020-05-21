@@ -64,7 +64,7 @@ RETCODE SQL_API SQLAllocHandle(SQLSMALLINT handleType, SQLHANDLE parentHandle, S
 
 RETCODE SQL_API SQLColAttributeW(HSTMT hstmt,SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLLEN *pfDesc){
 	int ret;
-	LOG(5, "Entering SQLColAttributeW (%p,%d,%d)\n",hstmt,icol,fDescType);
+	LOG(5, "Entering SQLColAttributeW (%p,%d,%d,%p,%d,%p,%p)\n",hstmt,icol,fDescType,rgbDesc,cbDescMax,pcbDesc,pfDesc);
 	if(hstmt == NULL )
 		return SQL_INVALID_HANDLE;
 	JStatement* stmt = (JStatement*)hstmt;
@@ -85,12 +85,21 @@ SQLColumnsW(HSTMT StatementHandle,
 }
 
 RETCODE		SQL_API
-SQLConnectW(HDBC ConnectionHandle,
-		   SQLWCHAR *ServerName, SQLSMALLINT NameLength1,
-		   SQLWCHAR *UserName, SQLSMALLINT NameLength2,
-		   SQLWCHAR *Authentication, SQLSMALLINT NameLength3){
-	LOG(5, "Entering SQLConnect (%p,%s,%s,%s)\n",ConnectionHandle,unicode_to_utf8(ServerName),unicode_to_utf8(UserName),unicode_to_utf8(Authentication));
-	return SQL_SUCCESS;
+SQLConnectW(HDBC hdbc,
+		   SQLWCHAR *serverName, SQLSMALLINT length1,
+		   SQLWCHAR *userName, SQLSMALLINT length2,
+		   SQLWCHAR *password, SQLSMALLINT length3){
+	LOG(5, "Entering SQLConnect (%p,%s,%s,%s)\n",hdbc,unicode_to_utf8(serverName),unicode_to_utf8(userName),unicode_to_utf8(password));
+	SQLWCHAR data[300];
+	SQLSMALLINT outLength;
+	int ret = SQL_ERROR;
+	strcpy(data,300,ustring(L"DSN="));
+	strcpy(data+4,300,ustring(serverName));
+	strcpy(data+ustring(data).size(),300,ustring(L";"));
+	ustring dsn = ustring(data);
+	JDatabase	*db = (JDatabase *) hdbc;
+	ret = db->connect((SQLWCHAR*)dsn.c_str(), dsn.size());
+	return ret;
 
 }
 
@@ -130,7 +139,6 @@ RETCODE SQL_API SQLDriverConnectW(HDBC hdbc, HWND hwnd, SQLWCHAR *szConnStrIn, S
 }
 
 RETCODE  SQL_API SQLExecDirectW(HSTMT handleStatement, SQLWCHAR * sql, SQLINTEGER length){
-	//char buf[length*sizeof(SQLWCHAR)+4];
 	int ret;
 	LOG(5, "Entering SQLExecDirectW (%p,%s)\n",handleStatement,unicode_to_utf8(sql));
 	if(handleStatement == NULL )
@@ -138,6 +146,28 @@ RETCODE  SQL_API SQLExecDirectW(HSTMT handleStatement, SQLWCHAR * sql, SQLINTEGE
 	JStatement* stmt = (JStatement*)handleStatement;
 	ret = stmt->execDirect(ustring(sql));
 	LOG(5, "Exiting SQLExecDirectW %d (%p,%s)\n",ret,handleStatement,unicode_to_utf8(sql));
+	return ret;
+}
+
+RETCODE SQL_API SQLExecute(SQLHSTMT hstm){
+	int ret;
+	LOG(5, "Entering SQLExecute (%p)\n",hstm);
+	if(hstm == NULL )
+		return SQL_INVALID_HANDLE;
+	JStatement* stmt = (JStatement*)hstm;
+	ret = stmt->execute();
+	LOG(5, "Exiting SQLExecute %d (%p)\n",ret,hstm);
+	return ret;
+}
+
+RETCODE SQL_API SQLPrepareW(SQLHSTMT hstm, SQLWCHAR *sql, SQLINTEGER length){
+	int ret;
+	LOG(5, "Entering SQLPrepareW (%p,%s)\n",hstm,unicode_to_utf8(sql));
+	if(hstm == NULL )
+		return SQL_INVALID_HANDLE;
+	JStatement* stmt = (JStatement*)hstm;
+	ret = stmt->prepareStatement(ustring(sql,length));
+	LOG(5, "Exiting SQLPrepareW %d (%p,%s)\n",ret,hstm,unicode_to_utf8(sql));
 	return ret;
 }
 
@@ -297,8 +327,13 @@ SQLGetDiagRecW(SQLSMALLINT fHandleType,
 		*pfNativeError= 0;
 	if(szSqlState)
 		*szSqlState=0;
+	if(szSqlState){
+		strcpy(szSqlState,6,ustring(L"00000"));
+	}
 
-	return SQL_SUCCESS;
+	//if(iRecord==1)
+	//	return SQL_SUCCESS;
+	return SQL_NO_DATA;
 }
 
 RETCODE  SQL_API SQLGetInfoW(HDBC hdbc,SQLUSMALLINT fInfoType, PTR rgbInfoValue, SQLSMALLINT cbInfoValueMax, SQLSMALLINT * pcbInfoValue){

@@ -16,6 +16,8 @@ public:
 	RETCODE createStatement();
 	RETCODE freeStatement(SQLUSMALLINT option);
 	RETCODE execDirect(ustring sql);
+	RETCODE execute();
+	RETCODE prepareStatement(ustring sql);
 	RETCODE getRowCount(SQLINTEGER * retCount);
 	RETCODE getResultColumnCount(SQLSMALLINT * retCount);
 	RETCODE describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSMALLINT bufLength, SQLSMALLINT *nameLength, SQLSMALLINT * dataType, SQLUINTEGER * colSize, SQLSMALLINT * decimalDigits, SQLSMALLINT * nullable);
