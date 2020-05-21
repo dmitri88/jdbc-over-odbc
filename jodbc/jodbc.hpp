@@ -26,6 +26,7 @@ extern "C" RETCODE SQL_API SQLGetFunctions(HDBC hdbc, SQLUSMALLINT FunctionId, S
 extern "C" RETCODE SQL_API SQLGetInfoW(HDBC hdbc, SQLUSMALLINT InfoType, PTR InfoValue, SQLSMALLINT BufferLength, SQLSMALLINT *StringLength);
 extern "C" RETCODE SQL_API SQLGetStmtAttrW(SQLHSTMT hstmt, SQLINTEGER	fAttribute, PTR		rgbValue, SQLINTEGER	cbValueMax, SQLINTEGER	*stringLength);
 extern "C" RETCODE SQL_API SQLGetTypeInfoW(HSTMT	hstm, SQLSMALLINT	DataType);
+extern "C" RETCODE SQL_API SQLMoreResults(HSTMT hstmt);
 extern "C" RETCODE SQL_API SQLNativeSqlW(HDBC hdbc,SQLWCHAR *szSqlStrIn,SQLINTEGER	cbSqlStrIn,SQLWCHAR *szSqlStr,SQLINTEGER	cbSqlStrMax,SQLINTEGER   *pcbSqlStr);
 extern "C" RETCODE SQL_API SQLNumResultCols(HSTMT hstm, SQLSMALLINT * retCount);
 extern "C" RETCODE SQL_API SQLRowCount(HSTMT hstm, SQLLEN * retCount);

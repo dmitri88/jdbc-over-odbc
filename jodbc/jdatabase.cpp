@@ -171,6 +171,12 @@ RETCODE JDatabase::getConnectionAttr(SQLINTEGER fAttribute, SQLPOINTER rgbValue,
 		case SQL_CURRENT_QUALIFIER :
 			jarrayToString(env, data, 0, rgbValue, cbValueMax,pcbValue);
 			break;
+
+		case SQL_TXN_ISOLATION:
+			jarrayToInt(env, data, 0,(jint*)rgbValue);
+			if(pcbValue!=NULL)
+				*pcbValue=0;
+			break;
 		}
 		return SQL_SUCCESS;
 	};

@@ -15,6 +15,7 @@ import org.dmitri.jodbc.enums.OdbcInfoType;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -96,6 +97,7 @@ public class OdbcDatabase {
 
 	}
 
+	@SneakyThrows
 	public Object[] getConnectionAttribute(long attrLong) {
 		OdbcConnectionAttribute attr = OdbcConnectionAttribute.valueOf((int) attrLong);
 		log.debug("JAVA getConnectionAttribute {} ", attr != null ? attr : attrLong);
@@ -111,6 +113,9 @@ public class OdbcDatabase {
 		switch (attr) {
 		case SQL_CURRENT_QUALIFIER:
 			ret[0] = getCurrentCatalog();
+			break;
+		case SQL_TXN_ISOLATION:
+			ret[0] = connection.getTransactionIsolation();
 			break;
 
 		default:

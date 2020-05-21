@@ -288,14 +288,20 @@ void test_queries(SQLHANDLE hDbc){
 
 	//ret = SQLBindCol(hStmt, 1, SQL_C_WCHAR, (PTR)data, /*SQLUINTEGER bufLength*/100, /*SQLUINTEGER * strLengthOrIndex*/&retCount);
 	//assert(ret == 0);
-
+	retCount = 0;
 	ret = SQLBindCol(hStmt, 1, SQL_C_SLONG, (PTR)&valInt, /*SQLUINTEGER bufLength*/4, /*SQLUINTEGER * strLengthOrIndex*/&retCount);
 	assert(ret == 0);
 
 	ret = SQLFetch(hStmt);
 	assert(ret == 0);
 	//assert(retCount == 4);
-	assert(valInt == 2);
+	assert(valInt == 3);
+
+	ret = SQLFreeStmt(hStmt, SQL_UNBIND);
+	assert(ret == 0);
+
+	ret = SQLMoreResults(hStmt);
+	assert(ret == SQL_NO_DATA);
 
 }
 
@@ -310,7 +316,7 @@ void test_attributes_3(SQLHANDLE hStmt){
 
 	ret = SQLRowCount(hStmt, &retCount);
 	assert(ret == 0);
-	assert(retCount == 2);
+	assert(retCount >2);
 	ret = SQLNumResultCols(hStmt, &colCount);
 	assert(ret == 0);
 	assert(colCount == 23);
@@ -413,6 +419,11 @@ void test_attributes(SQLHANDLE hStmt){
 	assert(numberValue == 0);
 
 	ret = SQLColAttributeW(hStmt, 1, 1212, data, 1024, &bufLength, &numberValue);
+	assert(ret == 0);
+	assert(bufLength == 0);
+	assert(numberValue == 0);
+
+	ret = SQLColAttributeW(hStmt, 1, SQL_COLUMN_TABLE_NAME, data, 1024, &bufLength, &numberValue);
 	assert(ret == 0);
 	assert(bufLength == 0);
 	assert(numberValue == 0);

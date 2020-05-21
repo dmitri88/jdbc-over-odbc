@@ -190,6 +190,7 @@ RETCODE JStatement::getColumnAttribute(SQLUSMALLINT icol, SQLUSMALLINT fDescType
 	std::function<int(JNIEnv* env,JStatement* statement, SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLINTEGER *numberValue)> func1;
 	func1 = [](JNIEnv *env,JStatement* statement, SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLINTEGER *numberValue) {
 		int ret = SQL_SUCCESS;
+
 		jobject val;
 		jlong stmt = (long long)statement;
 		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "getColumnAttribute", "(JII)[Ljava/lang/Object;");
@@ -218,6 +219,10 @@ RETCODE JStatement::getColumnAttribute(SQLUSMALLINT icol, SQLUSMALLINT fDescType
 		case SQL_DESC_BASE_COLUMN_NAME:
 		case SQL_DESC_CATALOG_NAME:
 		case SQL_DESC_SCHEMA_NAME:
+		case SQL_COLUMN_TABLE_NAME:
+			ret = getColumnAttribute_18(env,data,rgbDesc,cbDescMax,pcbDesc, numberValue);
+			break;
+
 
 		case 1212:
 			if(pcbDesc != NULL)
@@ -386,6 +391,25 @@ RETCODE JStatement::fetch(){
 				return SQL_ERROR;
 			}
 			LOG(5, "fetch param (%d,%d,%p,%li,%p)\n",i,type,valuePtr,bufLength,strLengthOrIndex);
+		}
+		return ret;
+	};
+	ret = java_callback(func1,this);
+	return ret;
+}
+
+RETCODE JStatement::moreResults(){
+	int ret;
+	std::function<int(JNIEnv* env,JStatement* statement)> func1;
+	func1 = [](JNIEnv *env,JStatement* statement) {
+		int ret = SQL_SUCCESS;
+		jlong stmt = (long long)statement;
+		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "moreResults", "(J)I");
+		ret = (jint)env->CallIntMethod(statement->connection->entrypointObj, method, stmt);
+		if(env->ExceptionCheck()){
+			env->ExceptionDescribe();
+			LOG(1,"Error: JStatement::fetch");
+			return SQL_ERROR;
 		}
 		return ret;
 	};

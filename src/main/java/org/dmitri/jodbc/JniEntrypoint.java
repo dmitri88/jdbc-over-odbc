@@ -152,4 +152,12 @@ public class JniEntrypoint {
 		}
 		return stmt.fetch();
 	}
+	
+	public int moreResults(long stmtId) {
+		OdbcStatement stmt = database.getStatement(stmtId);
+		if(stmt == null) {
+			throw new RuntimeException("statement not found "+ stmtId);
+		}
+		return stmt.moreResults();
+	}
 }

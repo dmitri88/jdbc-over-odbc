@@ -163,12 +163,7 @@ RETCODE		SQL_API SQLFreeStmt(HSTMT handleStatement, SQLUSMALLINT option)
 RETCODE SQL_API SQLGetFunctions(HDBC ConnectionHandle, SQLUSMALLINT FunctionId, SQLUSMALLINT *pfExists)
 {
 	LOG(5, "Entering GetFunctions (%p,%hi)\n",ConnectionHandle,FunctionId);
-	////ConnectionClass	*conn = (ConnectionClass *) hdbc;
-	////ConnInfo	*ci = &(conn->connInfo);
 
-
-	////CC_examine_global_transaction(conn);
-	////CC_clear_error(conn);
 	if (FunctionId != SQL_API_ODBC3_ALL_FUNCTIONS)
 		return SQL_ERROR;
 	memset(pfExists, 0, sizeof(UWORD) * SQL_API_ODBC3_ALL_FUNCTIONS_SIZE);
@@ -296,6 +291,13 @@ SQLGetDiagRecW(SQLSMALLINT fHandleType,
 			   SQLSMALLINT	cbErrorMsgMax,
 			   SQLSMALLINT	*pcbErrorMsg) {
 	LOG(5, "Entering SQLGetDiagRecW %hi,%p,%hi\n",fHandleType,handle,iRecord);
+	if (pcbErrorMsg)
+		*pcbErrorMsg = 0;
+	if(pfNativeError)
+		*pfNativeError= 0;
+	if(szSqlState)
+		*szSqlState=0;
+
 	return SQL_SUCCESS;
 }
 
@@ -597,7 +599,7 @@ RETCODE SQL_API SQLNativeSqlW(HDBC hdbc,SQLWCHAR *szSqlStrIn,SQLINTEGER	cbSqlStr
 RETCODE	SQL_API SQLBindCol(HSTMT hstmt, SQLUSMALLINT column, SQLSMALLINT type, PTR value, SQLINTEGER bufLength, SQLINTEGER * strLengthOrIndex){
 	RETCODE	ret;
 
-	LOG(5, "Entering SQLBindCol (%d,%d,%p,%li,%p)\n",column,type,value,bufLength,strLengthOrIndex);
+	LOG(5, "Entering SQLBindCol (%d,%d,%p,%li,%p,%d)\n",column,type,value,bufLength,strLengthOrIndex,POINTER_VAL(strLengthOrIndex));
 	if(!hstmt)
 		return SQL_INVALID_HANDLE;
 	JStatement* stmt = (JStatement*)hstmt;
@@ -618,5 +620,19 @@ RETCODE SQL_API SQLFetch(HSTMT hstmt) {
 	ret = stmt->fetch();
 
 	LOG(5, "Exiting SQLFetch %d (%p)\n",ret,hstmt);
+	return ret;
+}
+
+RETCODE SQL_API SQLMoreResults(HSTMT hstmt){
+	RETCODE	ret;
+
+	LOG(5, "Entering SQLMoreResults (%p)\n",hstmt);
+	if(!hstmt)
+		return SQL_INVALID_HANDLE;
+	JStatement* stmt = (JStatement*)hstmt;
+
+	ret = stmt->moreResults();
+
+	LOG(5, "Exiting SQLMoreResults %d (%p)\n",ret,hstmt);
 	return ret;
 }
