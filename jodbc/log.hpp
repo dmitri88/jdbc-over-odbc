@@ -10,6 +10,7 @@
 
 
 #define LOG(level, fmt, ...)  printf(fmt, ##__VA_ARGS__)
+//#define LOG(level, fmt, ...)
 
 
 

@@ -331,6 +331,7 @@ void test_imp(SQLHANDLE hDbc){
 	ret = SQLGetStmtAttrW(hStmt, SQL_ATTR_IMP_ROW_DESC, &ird, SQL_IS_POINTER, NULL);
 	assert(ret == 0);
 	assert((long)ird > 99);
+	assert(ird == hStmt);
 
 	/* get the number of columns */
 	ret = SQLGetDescFieldW(ird, 0, SQL_DESC_COUNT, &retCount, 0, NULL);
@@ -342,8 +343,25 @@ void test_imp(SQLHANDLE hDbc){
 	assert(retCount == 20);
 	assert(ustring((SQLWCHAR*)data).compare(ustring(L"Package_ID"))==0);
 
-	for (int index = 1; index <= retCount; index++) {
-		printf("asdasdas\n");
+	ret = SQLGetDescFieldW(ird, 1, SQL_DESC_TYPE_NAME, data, 512, &retCount);
+	assert(ret == 0);
+	assert(retCount == 6);
+	assert(ustring((SQLWCHAR*)data).compare(ustring(L"int"))==0);
+
+	ret = SQLGetDescFieldW(ird, 1, SQL_DESC_PRECISION, &retCount,0, NULL);
+	assert(ret == 0);
+	assert(retCount == 10);
+
+	ret = SQLGetDescFieldW(ird, 1, SQL_DESC_SCALE, &retCount,0, NULL);
+	assert(ret == 0);
+	assert(retCount == 0);
+
+	ret = SQLGetDescFieldW(ird, 1, SQL_DESC_LENGTH, &retCount,0, NULL);
+	assert(ret == 0);
+	assert(retCount == 10);
+
+	//for (int index = 1; index <= retCount; index++) {
+	//	printf("asdasdas\n");
 		//ret = SQLGetDescFieldW(ird, index, SQL_DESC_NAME, colName, 512, NULL);
 		///assert(ret == 0);
 //		SQLGetDescField(ird, index, SQL_DESC_TYPE_NAME, typeName, LEN, NULL);
@@ -354,7 +372,7 @@ void test_imp(SQLHANDLE hDbc){
 //	printf(“Column No : %d, Name : %s, Type : %s, Length : %d,
 //			Precision : %d, Scale : %d \n”, index, colName, typeName, len, length, prec,
 //			scale);
-}
+//}
 
 }
 

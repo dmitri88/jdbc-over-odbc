@@ -5,9 +5,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.dmitri.jodbc.dto.BoundParameter;
 import org.dmitri.jodbc.enums.OdbcBindType;
@@ -17,12 +15,10 @@ import org.dmitri.jodbc.enums.OdbcStatementAttribute;
 import org.dmitri.jodbc.enums.OdbcStatus;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@RequiredArgsConstructor
 public class OdbcStatement {
 	private static int DESCRIPTOR_IMP_ID=1;
 
@@ -38,7 +34,11 @@ public class OdbcStatement {
 	@Getter
 	private OdbcImpDescriptor impDescriptor = null; 
 	
-	// private int fetchSize = 1;
+	public OdbcStatement(OdbcDatabase database,long statementId) {
+		this.database=database;
+		this.statementId = statementId;
+		impDescriptor = OdbcImpDescriptor.register(this);
+	}
 
 	public void freeResource(long option) {
 		log.debug("JAVA freeResource {} {}", statementId, option);
@@ -154,7 +154,7 @@ public class OdbcStatement {
 			ret[4] = Integer.valueOf(0); // decimalDigits
 			// ret[5] = Integer.valueOf(rsmd.isNullable(colNum));
 			ret[5] = rsmd.isNullable(colNum);
-			ret[3] = Integer.valueOf(getColumnAttributeByLength(colNum).intValue());
+			ret[3] = Integer.valueOf(getImpDescriptor().getColumnAttributeByLength(colNum).intValue());
 
 		} catch (SQLException e) {
 			log.error("describeColumn error", e);
@@ -176,7 +176,7 @@ public class OdbcStatement {
 			ret = new Object[] { getColumnAttributeByDisplaySize(colNum) };
 			break;
 		case SQL_COLUMN_LENGTH:
-			ret = new Object[] { getColumnAttributeByLength(colNum) };
+			ret = new Object[] { getImpDescriptor().getColumnAttributeByLength(colNum) };
 			break;
 		case SQL_COLUMN_UPDATABLE:
 			ret = new Object[] {getColumnAttributeByUpdatable(colNum)};
@@ -229,16 +229,6 @@ public class OdbcStatement {
 		}
 	}
 
-	private Long getColumnAttributeByLength(int colNum) {
-		try {
-			ResultSetMetaData rsmd = result.getMetaData();
-			return Long.valueOf(rsmd.getPrecision(colNum));
-		} catch (SQLException e) {
-			log.error("getColumnAttributeByLength error", e);
-			throw new RuntimeException(e);
-		}
-	}
-
 	@SneakyThrows
 	public Object[] getStatementAttribute(int attrInt) {
 		OdbcStatementAttribute attr = OdbcStatementAttribute.valueOf(attrInt);
@@ -250,8 +240,11 @@ public class OdbcStatement {
 			return new Object[] { Long.valueOf(1) };// SQL_CONCUR_READ_ONLY
 		case SQL_ATTR_ROW_ARRAY_SIZE:
 			return new Object[] { Long.valueOf(statement.getFetchSize()) };
+		case SQL_ATTR_APP_ROW_DESC:
+		case SQL_ATTR_APP_PARAM_DESC:
+		case SQL_ATTR_IMP_PARAM_DESC:
 		case SQL_ATTR_IMP_ROW_DESC:
-			return new Object[] { impDescriptor.getId() };
+			return new Object[] { statementId };
 		default:
 			log.warn("UNDEFINED statement attibute:" + attr);
 			return null;

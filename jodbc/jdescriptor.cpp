@@ -26,10 +26,14 @@ RETCODE JStatement::descriptorField(SQLSMALLINT iRecord, SQLSMALLINT iField, PTR
 			return SQL_ERROR;
 		}
 		switch(iField){
+		case SQL_DESC_LENGTH:
+		case SQL_DESC_SCALE:
+		case SQL_DESC_PRECISION:
 		case SQL_DESC_COUNT:
 			longVal = jlong_to_long(env,retobj);
 			*(SQLINTEGER*)rgbValue = longVal;
 			break;
+		case SQL_DESC_TYPE_NAME:
 		case SQL_DESC_NAME:
 			ret |= jstringToString(env, (jstring)retobj, (SQLWCHAR*) rgbValue, cbValueMax,(SQLUINTEGER*)pcbValue);
 			break;

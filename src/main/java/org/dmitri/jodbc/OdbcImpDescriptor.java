@@ -49,12 +49,23 @@ public class OdbcImpDescriptor {
 				iRecord);
 		Object ret;
 		switch (attr) {
+		
+		case SQL_DESC_SCALE:
+			ret= Long.valueOf(getColumnScale(iRecord));
+			break;
+		case SQL_DESC_LENGTH:
+		case SQL_DESC_PRECISION:
+			ret= Long.valueOf(getColumnAttributeByLength(iRecord));
+			break;
 		case SQL_DESC_COUNT:
 			ret= Long.valueOf(getColumnCount());
 			break;
 		case SQL_DESC_NAME:
 			ret= getColumnLabel(iRecord);
-			return ret;
+			break;
+		case SQL_DESC_TYPE_NAME:
+			ret= getColumnTypeName(iRecord);
+			break;
 		default:
 			log.warn("getDescriptorField not used {}",attr);
 			return null;
@@ -63,6 +74,16 @@ public class OdbcImpDescriptor {
 		return ret;
 	}
 	
+	private Long getColumnScale(int iRecord) {
+		try {
+			ResultSetMetaData rsmd = getResult().getMetaData();
+			return  Long.valueOf(rsmd.getScale(iRecord));
+		} catch (SQLException e) {
+			log.error("getColumnScale error", e);
+			throw new RuntimeException(e);
+		}
+	}
+
 	public int getColumnCount() {
 		int columnsNumber;
 		try {
@@ -79,10 +100,30 @@ public class OdbcImpDescriptor {
 		try {
 			ResultSetMetaData rsmd = getResult().getMetaData();
 			String ret =  rsmd.getColumnLabel(colNum);
-			log.trace("column label: {}",ret);
 			return ret;
 		} catch (SQLException e) {
-			log.error("getColumnAttributeByLabel error", e);
+			log.error("getColumnLabel error", e);
+			throw new RuntimeException(e);
+		}
+	}
+	
+	public Long getColumnAttributeByLength(int colNum) {
+		try {
+			ResultSetMetaData rsmd = getResult().getMetaData();
+			return Long.valueOf(rsmd.getPrecision(colNum));
+		} catch (SQLException e) {
+			log.error("getColumnAttributeByLength error", e);
+			throw new RuntimeException(e);
+		}
+	}
+	
+	public String getColumnTypeName(int colNum) {
+		try {
+			ResultSetMetaData rsmd = getResult().getMetaData();
+			String ret =  rsmd.getColumnTypeName(colNum);
+			return ret;
+		} catch (SQLException e) {
+			log.error("getColumnTypeName error", e);
 			throw new RuntimeException(e);
 		}
 	}

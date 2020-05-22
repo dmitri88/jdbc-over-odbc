@@ -33,6 +33,7 @@ public class JniEntrypoint {
 			Level level = Level.valueOf(val.trim().toUpperCase());
 			ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 			root.setLevel(level);
+			//root.setLevel(Level.OFF);
 			return;
 		}
 		
