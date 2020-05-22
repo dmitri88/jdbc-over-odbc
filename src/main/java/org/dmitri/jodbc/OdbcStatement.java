@@ -5,7 +5,9 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.dmitri.jodbc.dto.BoundParameter;
 import org.dmitri.jodbc.enums.OdbcBindType;
@@ -14,6 +16,7 @@ import org.dmitri.jodbc.enums.OdbcFreeStatement;
 import org.dmitri.jodbc.enums.OdbcStatementAttribute;
 import org.dmitri.jodbc.enums.OdbcStatus;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -21,13 +24,19 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class OdbcStatement {
+	private static int DESCRIPTOR_IMP_ID=1;
 
 	private final OdbcDatabase database;
+	@Getter
 	private final long statementId;
 
 	private PreparedStatement statement;
+	@Getter
 	private ResultSet result;
 	private List<BoundParameter> bindParameters = new ArrayList<>();
+	
+	@Getter
+	private OdbcImpDescriptor impDescriptor = null; 
 	
 	// private int fetchSize = 1;
 
@@ -56,6 +65,9 @@ public class OdbcStatement {
 			} catch (SQLException e) {
 			}
 			result = null;
+			OdbcImpDescriptor.remove(impDescriptor);
+			impDescriptor = null;
+			
 		}
 	}
 
@@ -104,6 +116,8 @@ public class OdbcStatement {
 			result = null;
 			statement = database.getConnection().prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE,
 					ResultSet.CONCUR_READ_ONLY);
+			OdbcImpDescriptor.remove(impDescriptor);
+			impDescriptor = OdbcImpDescriptor.register(this);
 		} catch (SQLException e) {
 			log.error("execDirect error", e);
 			throw new RuntimeException(e);
@@ -126,18 +140,6 @@ public class OdbcStatement {
 			throw new RuntimeException(ex);
 		}
 		return size;
-	}
-
-	public int getResultColumnCount() {
-		int columnsNumber;
-		try {
-			ResultSetMetaData rsmd = result.getMetaData();
-			columnsNumber = rsmd.getColumnCount();
-		} catch (SQLException e) {
-			log.error("getResultColumnCount error", e);
-			throw new RuntimeException(e);
-		}
-		return columnsNumber;
 	}
 
 	public Object[] describeColumn(int colNum) {
@@ -180,7 +182,7 @@ public class OdbcStatement {
 			ret = new Object[] {getColumnAttributeByUpdatable(colNum)};
 			break;
 		case SQL_COLUMN_LABEL:
-			ret = new Object[] {getColumnAttributeByLabel(colNum)};
+			ret = new Object[] {impDescriptor.getColumnLabel(colNum)};
 			break;
 		case SQL_COLUMN_AUTO_INCREMENT:
 			ResultSetMetaData rsmd = result.getMetaData();
@@ -237,18 +239,6 @@ public class OdbcStatement {
 		}
 	}
 
-	private String getColumnAttributeByLabel(int colNum) {
-		try {
-			ResultSetMetaData rsmd = result.getMetaData();
-			String ret =  rsmd.getColumnLabel(colNum);
-			log.trace("column label: {}",ret);
-			return ret;
-		} catch (SQLException e) {
-			log.error("getColumnAttributeByLabel error", e);
-			throw new RuntimeException(e);
-		}
-	}
-
 	@SneakyThrows
 	public Object[] getStatementAttribute(int attrInt) {
 		OdbcStatementAttribute attr = OdbcStatementAttribute.valueOf(attrInt);
@@ -260,6 +250,8 @@ public class OdbcStatement {
 			return new Object[] { Long.valueOf(1) };// SQL_CONCUR_READ_ONLY
 		case SQL_ATTR_ROW_ARRAY_SIZE:
 			return new Object[] { Long.valueOf(statement.getFetchSize()) };
+		case SQL_ATTR_IMP_ROW_DESC:
+			return new Object[] { impDescriptor.getId() };
 		default:
 			log.warn("UNDEFINED statement attibute:" + attr);
 			return null;

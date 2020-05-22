@@ -25,11 +25,14 @@ extern jint jinteger_to_jint(JNIEnv *env, jobject intObj);
 extern jlong jlong_to_long(JNIEnv *env, jobject longObj);
 
 extern RETCODE jarrayToString(JNIEnv *env, jobjectArray array, int pos, PTR pointer, SQLUINTEGER maxSize,SQLUINTEGER *retSize);
+extern RETCODE jarrayToString(JNIEnv* env, jobjectArray data, int pos, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLINTEGER *numberValue);
 extern RETCODE jarrayToInt(JNIEnv *env, jobjectArray array, int pos, jint* pointer);
 extern RETCODE jarrayToInt(JNIEnv *env, jobjectArray array, int pos, PTR pointer, SQLUINTEGER maxSize);
 extern RETCODE jarrayToShort(JNIEnv *env, jobjectArray data, int pos, jshort* pointer);
 extern RETCODE jarrayToShort(JNIEnv *env, jobjectArray array, int pos, PTR pointer, SQLUINTEGER maxSize);
 extern RETCODE jarrayToLong(JNIEnv *env, jobjectArray data, int pos, jlong* pointer);
+extern RETCODE jarrayToLong(JNIEnv* env, jobjectArray data,int arrayPos, SQLINTEGER * numberData,SQLPOINTER rawData, SQLSMALLINT rawDataMax, SQLSMALLINT  *rawDataType);
+extern RETCODE jstringToString(JNIEnv *env, jstring data, SQLWCHAR* pointer, SQLUINTEGER maxStringLength,SQLUINTEGER *retByteSize);
 
 
 

@@ -312,6 +312,54 @@ void test_queries(SQLHANDLE hDbc){
 
 }
 
+void test_imp(SQLHANDLE hDbc){
+	int ret;
+	SQLINTEGER valInt;
+	SQLINTEGER retCount;
+	SQLHANDLE hStmt;
+	SQLHANDLE ird;
+	char data[1024];
+	char retdata[1024];
+
+	ret = SQLAllocHandle( SQL_HANDLE_STMT, hDbc, &hStmt);
+	assert(ret == 0);
+
+	ret = SQLExecDirectW(hStmt, (SQLWCHAR*)ustring(L"select * from t_package").c_str(), -1);
+	assert(ret == 0);
+
+	/* get the ird descriptors */
+	ret = SQLGetStmtAttrW(hStmt, SQL_ATTR_IMP_ROW_DESC, &ird, SQL_IS_POINTER, NULL);
+	assert(ret == 0);
+	assert((long)ird > 99);
+
+	/* get the number of columns */
+	ret = SQLGetDescFieldW(ird, 0, SQL_DESC_COUNT, &retCount, 0, NULL);
+	assert(ret == 0);
+	assert(retCount ==23);
+
+	ret = SQLGetDescFieldW(ird, 1, SQL_DESC_NAME, data, 512, &retCount);
+	assert(ret == 0);
+	assert(retCount == 20);
+	assert(ustring((SQLWCHAR*)data).compare(ustring(L"Package_ID"))==0);
+
+	for (int index = 1; index <= retCount; index++) {
+		printf("asdasdas\n");
+		//ret = SQLGetDescFieldW(ird, index, SQL_DESC_NAME, colName, 512, NULL);
+		///assert(ret == 0);
+//		SQLGetDescField(ird, index, SQL_DESC_TYPE_NAME, typeName, LEN, NULL);
+//		SQLGetDescField(ird, index, SQL_DESC_PRECISION, &prec, 0, NULL);
+//
+//		SQLGetDescField(ird, index, SQL_DESC_SCALE, &scale, 0, NULL);
+//		SQLGetDescField(ird, index, SQL_DESC_LENGTH, &length, 0, NULL);
+//	printf(“Column No : %d, Name : %s, Type : %s, Length : %d,
+//			Precision : %d, Scale : %d \n”, index, colName, typeName, len, length, prec,
+//			scale);
+}
+
+}
+
+
+
 void test_attributes_3(SQLHANDLE hStmt){
 	int ret;
 	SQLLEN retCount;
@@ -500,6 +548,7 @@ int main(int argc, char **argv) {
 	test_attributes(hStmt);
 	test_attributes_3(hStmt);
 	test_queries(hDbc);
+	test_imp(hDbc);
 
 	printf("\ntesting-done\n");
 }

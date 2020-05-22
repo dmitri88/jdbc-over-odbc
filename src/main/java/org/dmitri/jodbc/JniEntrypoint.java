@@ -108,7 +108,7 @@ public class JniEntrypoint {
 		if(stmt == null) {
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
-		return stmt.getResultColumnCount();
+		return stmt.getImpDescriptor().getColumnCount();
 	}
 	
 	public Object[] describeColumn(long stmtId, int colNum) {
@@ -175,5 +175,18 @@ public class JniEntrypoint {
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
 		return stmt.moreResults();
+	}
+	
+	public Object getDescriptorField(long stmtId , int iRecord , int iField) {
+		OdbcStatement stmt = database.getStatement(stmtId);
+		if(stmt == null) {
+			throw new RuntimeException("statement not found "+ stmtId);
+		}	
+		
+		OdbcImpDescriptor descriptor = stmt.getImpDescriptor();
+		if(descriptor == null) {
+			throw new RuntimeException("descriptor not found "+ stmtId);
+		}	
+		return descriptor.getDescriptorField(iRecord , iField);
 	}
 }

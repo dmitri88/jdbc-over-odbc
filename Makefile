@@ -20,9 +20,9 @@ java:
 	gradle jar	
 
 docker_lib: compiled.obj
-	gcc -m32 -shared $(LIBS_INCLUDE) -o bin/libjodbc.so bin/jvm.o bin/jodbc.o bin/unicode.o bin/jdatabase.o bin/jstatement.o -ljvm -lodbcinst
+	gcc -m32 -shared $(LIBS_INCLUDE) -o bin/libjodbc.so bin/jvm.o bin/jodbc.o bin/unicode.o bin/jdatabase.o bin/jstatement.o bin/jdescriptor.o -ljvm -lodbcinst
 
-compiled.obj: unicode.cpp jodbc.cpp jvm.cpp jdatabase.cpp jstatement.cpp
+compiled.obj: unicode.cpp jodbc.cpp jvm.cpp jdatabase.cpp jstatement.cpp jdescriptor.cpp
 
 jodbc.cpp:
 	gcc -m32 -c $(JODBC_FLAGS)  $(JODBC_INCLUDES) jodbc/jodbc.cpp -o bin/jodbc.o
@@ -32,6 +32,8 @@ jdatabase.cpp:
 	gcc -m32 -c $(JODBC_FLAGS)  $(JODBC_INCLUDES) jodbc/jdatabase.cpp   -o bin/jdatabase.o
 jstatement.cpp:
 	gcc -m32 -c $(JODBC_FLAGS)  $(JODBC_INCLUDES) jodbc/jstatement.cpp   -o bin/jstatement.o
+jdescriptor.cpp:
+	gcc -m32 -c $(JODBC_FLAGS)  $(JODBC_INCLUDES) jodbc/jdescriptor.cpp   -o bin/jdescriptor.o
 unicode.cpp:
 	gcc -m32 -c $(JODBC_FLAGS)  $(JODBC_INCLUDES) jodbc/unicode.cpp -o bin/unicode.o
 	

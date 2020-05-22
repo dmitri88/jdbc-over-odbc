@@ -197,74 +197,6 @@ RETCODE JStatement::describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSM
 	return ret;
 }
 
-RETCODE getStringFromArrayObject(JNIEnv* env, jobjectArray data, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLINTEGER *numberValue){
-	int ret = SQL_SUCCESS;
-	if(rgbDesc != NULL){
-		jstring val=(jstring) env->GetObjectArrayElement(data, 0);
-		ustring wcharData = ustring(from_jstring(env,val));
-		if(wcharData.size()* sizeof(SQLWCHAR)>(SQLUSMALLINT)cbDescMax){
-			return SQL_ERROR;
-		}
-		ret = strcpy((SQLWCHAR*)rgbDesc,cbDescMax/2,wcharData);
-		if(pcbDesc)
-			*pcbDesc = wcharData.size()* sizeof(SQLWCHAR);
-	}
-	if(numberValue!= NULL){
-		*numberValue = 0;
-	}
-	return ret;
-}
-
-RETCODE getLongFromArrayObject(JNIEnv* env, jobjectArray data,int arrayPos, SQLINTEGER * numberData,SQLPOINTER rawData, SQLSMALLINT rawDataMax, SQLSMALLINT  *rawDataType){
-	jobject val=(jobject) env->GetObjectArrayElement(data, arrayPos);
-	if(env->ExceptionCheck()){
-		env->ExceptionDescribe();
-		return SQL_ERROR;
-	}
-
-
-	SQLINTEGER valInt = jlong_to_long(env,val);
-	if(numberData) {
-		*numberData = valInt;
-	}
-	if(rawData){
-		int dataType=0;
-		if(rawDataMax<0)
-			dataType =rawDataMax;
-		if((int)rawDataType <0 && dataType==0)
-			dataType =(int)rawDataType;
-
-
-		if(rawDataMax ==4 || dataType == SQL_IS_INTEGER){
-			*rawDataType = SQL_IS_INTEGER;
-			*(SQLINTEGER *)rawData=(SQLINTEGER)valInt;
-		}
-		else if (rawDataMax ==4 || dataType == SQL_IS_UINTEGER){
-			*rawDataType = SQL_IS_UINTEGER;
-			*(SQLUINTEGER *)rawData=(SQLUINTEGER)valInt;
-		}
-		else if(rawDataMax ==2 || dataType == SQL_IS_SMALLINT){
-			*rawDataType = SQL_IS_SMALLINT;
-			*(SQLSMALLINT *)rawData=(SQLSMALLINT)valInt;
-		}
-		else if (rawDataMax ==2 || dataType == SQL_IS_USMALLINT){
-			*rawDataType = SQL_IS_USMALLINT;
-			*(SQLUSMALLINT *)rawData=(SQLUSMALLINT)valInt;
-		}
-		else {
-			LOG(1,"getLongFromArrayObject incorrect size %d",rawDataMax);
-			return SQL_ERROR;
-		}
-
-#define SQL_IS_POINTER							(-4)
-#define SQL_IS_UINTEGER							(-5)
-#define SQL_IS_INTEGER							(-6)
-#define SQL_IS_USMALLINT						(-7)
-#define SQL_IS_SMALLINT							(-8)
-
-	}
-	return SQL_SUCCESS;
-}
 
 
 RETCODE JStatement::getColumnAttribute(SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLINTEGER *numberValue){
@@ -293,7 +225,7 @@ RETCODE JStatement::getColumnAttribute(SQLUSMALLINT icol, SQLUSMALLINT fDescType
 		case SQL_COLUMN_LENGTH://col size
 		case SQL_COLUMN_UNSIGNED://unsigned
 		case SQL_COLUMN_AUTO_INCREMENT:
-			ret = getLongFromArrayObject(env,data,0, numberValue,rgbDesc,4,pcbDesc);
+			ret = jarrayToLong(env,data,0, numberValue,rgbDesc,4,pcbDesc);
 			break;
 		case SQL_COLUMN_LABEL:
 		case SQL_DESC_BASE_TABLE_NAME:
@@ -301,7 +233,7 @@ RETCODE JStatement::getColumnAttribute(SQLUSMALLINT icol, SQLUSMALLINT fDescType
 		case SQL_DESC_CATALOG_NAME:
 		case SQL_DESC_SCHEMA_NAME:
 		case SQL_COLUMN_TABLE_NAME:
-			ret = getStringFromArrayObject(env,data,rgbDesc,cbDescMax,pcbDesc, numberValue);
+			ret = jarrayToString(env,data,0,rgbDesc,cbDescMax,pcbDesc, numberValue);
 			break;
 
 
@@ -321,7 +253,6 @@ RETCODE JStatement::getColumnAttribute(SQLUSMALLINT icol, SQLUSMALLINT fDescType
 	return ret;
 }
 
-
 RETCODE JStatement::getStatementAttr(SQLINTEGER	fAttribute, PTR		rgbValue, SQLINTEGER	cbValueMax, SQLINTEGER	*stringLength){
 	int ret;
 	std::function<int(JNIEnv* env,JStatement* statement, SQLINTEGER fAttribute, PTR		rgbValue, SQLINTEGER	cbValueMax, SQLINTEGER	*stringLength)> func1;
@@ -340,9 +271,15 @@ RETCODE JStatement::getStatementAttr(SQLINTEGER	fAttribute, PTR		rgbValue, SQLIN
 		switch(fAttribute){
 		case SQL_CURSOR_TYPE:
 		case SQL_CONCURRENCY:
-			ret = getLongFromArrayObject(env,data,0,NULL, (SQLPOINTER)rgbValue,cbValueMax,&retType);
+			ret = jarrayToLong(env,data,0,NULL, (SQLPOINTER)rgbValue,cbValueMax,&retType);
 			if(stringLength)
 				*stringLength = 0;
+			break;
+		case SQL_ATTR_IMP_ROW_DESC:
+			ret = jarrayToLong(env,data,0,NULL, (SQLPOINTER)rgbValue,cbValueMax,&retType);
+			if(stringLength)
+				*stringLength = 0;
+			*(JStatement**)rgbValue = statement;
 			break;
 //		case SQL_ATTR_PARAMSET_SIZE:
 //			if(stringLength != NULL)
@@ -411,14 +348,14 @@ RETCODE bindResultToVariable(JNIEnv* env,jobject val, SQLSMALLINT type, PTR valu
 
 	case SQL_C_SLONG://32 bit signed
 		if(bufLength<4){
-			LOG(1,"bind variable buffer is too small %d needed 4",bufLength);
+			LOG(1,"bind variable buffer is too small %lu needed 4",bufLength);
 			return SQL_SUCCESS;
 		}
 		*((SQLINTEGER*)valuePtr)=(SQLINTEGER)jlong_to_long(env, val);
 		break;
 	case SQL_C_ULONG:
 		if(bufLength<4){
-			LOG(1,"bind variable buffer is too small %d needed 4",bufLength);
+			LOG(1,"bind variable buffer is too small %lu needed 4",bufLength);
 			return SQL_SUCCESS;
 		}
 		*((SQLUINTEGER*)valuePtr)=(SQLUINTEGER)jlong_to_long(env, val);

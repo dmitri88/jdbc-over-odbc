@@ -8,6 +8,7 @@
 #include <thread>
 #include <future>
 #include <string.h>
+#include <sqlext.h>
 #include <odbcinst.h>
 #include "jodbc.hpp"
 #include "jvm.hpp"
@@ -108,21 +109,21 @@ jlong jlong_to_long(JNIEnv *env, jobject longObj){
 	return ret;
 }
 
-RETCODE jarrayToString(JNIEnv *env, jobjectArray data, int pos, PTR pointer, SQLUINTEGER maxSize,SQLUINTEGER *retSize){
+RETCODE jarrayToString(JNIEnv *env, jobjectArray data, int pos, PTR pointer, SQLUINTEGER maxStringLength,SQLUINTEGER *retByteSize){
 	int ret;
 	jstring val=(jstring) env->GetObjectArrayElement(data, pos);
 	ustring wcharData = ustring(from_jstring(env,val));
 
 	if(pointer == NULL) {
-		*retSize = (wcharData.size())* sizeof(SQLWCHAR);
+		*retByteSize = (wcharData.size())* sizeof(SQLWCHAR);
 		return SQL_SUCCESS;
 	}
-	if(wcharData.size()>maxSize){
+	if(wcharData.size()>maxStringLength){
 		return SQL_ERROR;
 	}
-	ret = strcpy((SQLWCHAR*)pointer,maxSize,wcharData);
-	if(retSize!= NULL){
-		*retSize = sizeof(SQLWCHAR)*wcharData.size();
+	ret = strcpy((SQLWCHAR*)pointer,maxStringLength,wcharData);
+	if(retByteSize!= NULL){
+		*retByteSize = sizeof(SQLWCHAR)*wcharData.size();
 	}
 	return ret;
 }
@@ -166,4 +167,90 @@ RETCODE jarrayToLong(JNIEnv *env, jobjectArray data, int pos, jlong* pointer){
 	jlong ret = (jlong)jlong_to_long(env,val);
 	*pointer=ret;
 	return SQL_SUCCESS;
+}
+
+
+RETCODE jarrayToString(JNIEnv* env, jobjectArray data, int pos, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLINTEGER *numberValue){
+	int ret = SQL_SUCCESS;
+	if(rgbDesc != NULL){
+		jstring val=(jstring) env->GetObjectArrayElement(data, pos);
+		ustring wcharData = ustring(from_jstring(env,val));
+		if(wcharData.size()* sizeof(SQLWCHAR)>(SQLUSMALLINT)cbDescMax){
+			return SQL_ERROR;
+		}
+		ret = strcpy((SQLWCHAR*)rgbDesc,cbDescMax/2,wcharData);
+		if(pcbDesc)
+			*pcbDesc = wcharData.size()* sizeof(SQLWCHAR);
+	}
+	if(numberValue!= NULL){
+		*numberValue = 0;
+	}
+	return ret;
+}
+
+RETCODE jarrayToLong(JNIEnv* env, jobjectArray data,int arrayPos, SQLINTEGER * numberData,SQLPOINTER rawData, SQLSMALLINT rawDataMax, SQLSMALLINT  *rawDataType){
+	jobject val=(jobject) env->GetObjectArrayElement(data, arrayPos);
+	if(env->ExceptionCheck()){
+		env->ExceptionDescribe();
+		return SQL_ERROR;
+	}
+
+
+	SQLINTEGER valInt = jlong_to_long(env,val);
+	if(numberData) {
+		*numberData = valInt;
+	}
+	if(rawData){
+		int dataType=0;
+		if(rawDataMax<0)
+			dataType =rawDataMax;
+		if((int)rawDataType <0 && dataType==0)
+			dataType =(int)rawDataType;
+
+		if(dataType == SQL_IS_POINTER){
+			*rawDataType = SQL_IS_INTEGER;
+			*(SQLINTEGER *)rawData=(SQLINTEGER)valInt;
+		}
+		else if(rawDataMax ==4 || dataType == SQL_IS_INTEGER){
+			*rawDataType = SQL_IS_INTEGER;
+			*(SQLINTEGER *)rawData=(SQLINTEGER)valInt;
+		}
+		else if (rawDataMax ==4 || dataType == SQL_IS_UINTEGER){
+			*rawDataType = SQL_IS_UINTEGER;
+			*(SQLUINTEGER *)rawData=(SQLUINTEGER)valInt;
+		}
+		else if(rawDataMax ==2 || dataType == SQL_IS_SMALLINT){
+			*rawDataType = SQL_IS_SMALLINT;
+			*(SQLSMALLINT *)rawData=(SQLSMALLINT)valInt;
+		}
+		else if (rawDataMax ==2 || dataType == SQL_IS_USMALLINT){
+			*rawDataType = SQL_IS_USMALLINT;
+			*(SQLUSMALLINT *)rawData=(SQLUSMALLINT)valInt;
+		}
+		else {
+			LOG(1,"getLongFromArrayObject incorrect size %d",rawDataMax);
+			return SQL_ERROR;
+		}
+
+	}
+	return SQL_SUCCESS;
+}
+
+RETCODE jstringToString(JNIEnv *env, jstring data, SQLWCHAR* pointer, SQLUINTEGER maxStringLength,SQLUINTEGER *retByteSize){
+	int ret;
+	ustring wcharData = ustring(from_jstring(env,data));
+
+	if(pointer == NULL) {
+		*retByteSize = (wcharData.size())* sizeof(SQLWCHAR);
+		return SQL_SUCCESS;
+	}
+	if(wcharData.size()>maxStringLength){
+		return SQL_ERROR;
+	}
+
+	ret = strcpy((SQLWCHAR*)pointer,maxStringLength,wcharData);
+	if(retByteSize!= NULL){
+		*retByteSize = sizeof(SQLWCHAR)*wcharData.size();
+	}
+	return ret;
 }

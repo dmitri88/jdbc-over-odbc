@@ -671,3 +671,17 @@ RETCODE SQL_API SQLMoreResults(HSTMT hstmt){
 	LOG(5, "Exiting SQLMoreResults %d (%p)\n",ret,hstmt);
 	return ret;
 }
+
+RETCODE SQL_API SQLGetDescFieldW(SQLHDESC hdesc, SQLSMALLINT iRecord, SQLSMALLINT iField, PTR rgbValue, SQLINTEGER cbValueMax, SQLINTEGER *pcbValue) {
+	RETCODE	ret;
+
+	LOG(5, "Entering SQLGetDescFieldW (%p,%d,%d,%p,%li,%p)\n",hdesc,iRecord,iField,rgbValue,cbValueMax,pcbValue);
+	if(!hdesc)
+		return SQL_INVALID_HANDLE;
+	JStatement* stmt = (JStatement*)hdesc;
+
+	ret = stmt->descriptorField(iRecord, iField, rgbValue, cbValueMax, pcbValue);
+
+	LOG(5, "Exiting SQLGetDescFieldW %d (%p,%d,%d)\n",ret,hdesc,iRecord,iField);
+	return ret;
+}

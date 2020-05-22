@@ -13,6 +13,7 @@ extern "C" RETCODE SQL_API SQLBindCol(HSTMT hstmt, SQLUSMALLINT column, SQLSMALL
 extern "C" RETCODE SQL_API SQLColAttributeW(HSTMT hstmt,SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLLEN *numValue);
 extern "C" RETCODE SQL_API SQLColumnsW(HSTMT hstm, SQLWCHAR *CatalogName, SQLSMALLINT NameLength1, SQLWCHAR *SchemaName, SQLSMALLINT NameLength2, SQLWCHAR *TableName, SQLSMALLINT NameLength3, SQLWCHAR *ColumnName, SQLSMALLINT NameLength4);
 extern "C" RETCODE SQL_API SQLConnectW(HDBC hdbc, SQLWCHAR *ServerName, SQLSMALLINT NameLength1, SQLWCHAR *UserName, SQLSMALLINT NameLength2, SQLWCHAR *Authentication, SQLSMALLINT NameLength3);
+extern "C" RETCODE SQL_API SQLGetDescFieldW(SQLHDESC hdesc, SQLSMALLINT iRecord, SQLSMALLINT iField, PTR rgbValue, SQLINTEGER cbValueMax, SQLINTEGER *pcbValue);
 extern "C" RETCODE SQL_API SQLDescribeColW(HSTMT hstm, SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSMALLINT bufLength, SQLSMALLINT *nameLength, SQLSMALLINT * dataType, SQLUINTEGER * colSize, SQLSMALLINT * decimalDigits, SQLSMALLINT * nullable);
 extern "C" RETCODE SQL_API SQLDisconnect(HDBC hdbc);
 extern "C" RETCODE SQL_API SQLDriverConnectW(HDBC hdbc, HWND hwnd, SQLWCHAR *szConnStrIn, SQLSMALLINT cbConnStrIn, SQLWCHAR *szConnStrOut, SQLSMALLINT cbConnStrOutMax, SQLSMALLINT *pcbConnStrOut, SQLUSMALLINT fDriverCompletion);
