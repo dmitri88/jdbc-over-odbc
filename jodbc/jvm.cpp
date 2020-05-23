@@ -236,6 +236,25 @@ RETCODE jarrayToLong(JNIEnv* env, jobjectArray data,int arrayPos, SQLINTEGER * n
 	return SQL_SUCCESS;
 }
 
+RETCODE jstringToChar(JNIEnv *env, jstring data, SQLCHAR* pointer, SQLUINTEGER maxStringLength,SQLUINTEGER *retByteSize){
+	int ret;
+	string charData = from_jstring(env,data);
+
+	if(pointer == NULL) {
+		*retByteSize = (charData.size())* sizeof(SQLCHAR);
+		return SQL_SUCCESS;
+	}
+	if(charData.size()>maxStringLength){
+		return SQL_ERROR;
+	}
+
+	strcpy((char*)pointer,charData.c_str());
+	if(retByteSize!= NULL){
+		*retByteSize = sizeof(SQLCHAR)*charData.size();
+	}
+	return SQL_SUCCESS;
+}
+
 RETCODE jstringToString(JNIEnv *env, jstring data, SQLWCHAR* pointer, SQLUINTEGER maxStringLength,SQLUINTEGER *retByteSize){
 	int ret;
 	ustring wcharData = ustring(from_jstring(env,data));

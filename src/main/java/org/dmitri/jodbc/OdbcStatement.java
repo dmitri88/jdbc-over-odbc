@@ -316,8 +316,8 @@ public class OdbcStatement {
 	}
 
 	private Object fetchColumn(ResultSet rs, int column, OdbcBindType type) throws SQLException {
+		Object ret;
 		switch (type) {
-		case SQL_C_CHAR:
 		case SQL_C_LONG:
 		case SQL_C_SHORT:
 		case SQL_C_TINYINT:
@@ -330,8 +330,14 @@ public class OdbcStatement {
 			long long1 = rs.getLong(column);
 			if (rs.wasNull())
 				return null;
-			return Long.valueOf(long1);
-
+			ret = Long.valueOf(long1);
+			break;
+		case SQL_C_CHAR:
+			String str = rs.getString(column);
+			if (rs.wasNull())
+				return null;
+			ret = str;
+			break;
 		// case SQL_C_DOUBLE:
 		// case SQL_C_FLOAT:
 
@@ -340,6 +346,8 @@ public class OdbcStatement {
 
 		}
 		// return null;
+		log.trace("getData: column:{} -> {} ({})",column,ret,ret.getClass().getSimpleName());
+		return ret;
 	}
 
 	private Object[] fetchError(OdbcStatus error) {
@@ -361,8 +369,40 @@ public class OdbcStatement {
 		return OdbcStatus.SQL_NO_DATA.getType();
 	}
 
+	@SneakyThrows
+	public Object[] getData(int column, OdbcBindType bindType) {
+		log.debug("JAVA getData {} {}", statementId,bindType);
+		if (statement == null || statement.isClosed()) {
+			log.error("fetch: invalid statement");
+			return fetchError(OdbcStatus.SQL_ERROR);
+		}
+		if (result == null) {
+			log.error("fetch: invalid result");
+			return fetchError(OdbcStatus.SQL_ERROR);
+		}
+		if (result.isClosed()) {
+			log.error("fetch: result is closed");
+			return fetchError(OdbcStatus.SQL_ERROR);
+		}
+		
+		int ELEMENTS_PER_PARAMETER = 5;
+		int paramCount = 1;
+		Object[] ret = new Object[2 + paramCount * ELEMENTS_PER_PARAMETER];
+		ret[0] = Integer.valueOf(OdbcStatus.SQL_SUCCESS.getType());
+		ret[1] = Integer.valueOf(paramCount);
 
-
+		int offset = 2;
+		for (int i = 0; i < paramCount; i++) {
+			ret[offset] = Integer.valueOf(bindType.getType());
+			ret[offset + 1] = Long.valueOf(0L);
+			ret[offset + 2] = Long.valueOf(0L);
+			ret[offset + 3] = Long.valueOf(0L);
+			ret[offset + 4] = fetchColumn(result, column, bindType);
+			offset += ELEMENTS_PER_PARAMETER;
+		}
+		return ret;
+		
+	}
 
 
 }

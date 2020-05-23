@@ -190,4 +190,12 @@ public class JniEntrypoint {
 		}	
 		return descriptor.getDescriptorField(iRecord , iField);
 	}
+	
+	public Object[] getData(long stmtId,int column,int type) {
+		OdbcStatement stmt = database.getStatement(stmtId);
+		if(stmt == null) {
+			throw new RuntimeException("statement not found "+ stmtId);
+		}
+		return stmt.getData(column, OdbcBindType.valueOf(type));
+	}
 }

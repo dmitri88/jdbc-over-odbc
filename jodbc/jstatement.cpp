@@ -344,8 +344,13 @@ RETCODE bindResultToVariable(JNIEnv* env,jobject val, SQLSMALLINT type, PTR valu
 	}
 	*strLengthOrIndex = 0;
 
+	jlong tt;
+	SQLCHAR tt2;
 	switch(type){
 
+	case SQL_C_CHAR:// char* string
+		jstringToChar(env,(jstring)val, (SQLCHAR*) valuePtr, bufLength,strLengthOrIndex);
+		break;
 	case SQL_C_SLONG://32 bit signed
 		if(bufLength<4){
 			LOG(1,"bind variable buffer is too small %lu needed 4",bufLength);
@@ -435,5 +440,51 @@ RETCODE JStatement::moreResults(){
 		return ret;
 	};
 	ret = java_callback(func1,this);
+	return ret;
+}
+
+RETCODE JStatement::getData(SQLUSMALLINT column, SQLSMALLINT targetType, PTR pointer, SQLLEN bufferLength, SQLLEN *strLenOrInd){
+	int ret;
+
+	std::function<int(JNIEnv* env,JStatement* statement, SQLUSMALLINT column, SQLSMALLINT targetType, PTR pointer, SQLLEN bufferLength, SQLLEN *strLenOrInd)> func1;
+	func1 = [](JNIEnv *env,JStatement* statement, SQLUSMALLINT column, SQLSMALLINT targetType, PTR pointer, SQLLEN bufferLength, SQLLEN *strLenOrInd) {
+		int ret = SQL_SUCCESS;
+		jobject val;
+		jlong stmt = (long long)statement;
+		//jlong data = (unsigned long)value;
+		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "getData", "(JII)[Ljava/lang/Object;");
+		jobjectArray data = (jobjectArray)env->CallObjectMethod(statement->connection->entrypointObj, method, stmt,column,targetType);
+		if(env->ExceptionCheck()){
+			env->ExceptionDescribe();
+			LOG(1,"Error: JStatement::getData\n");
+			return SQL_ERROR;
+		}
+		jint fetchRet;
+		ret = jarrayToInt(env,data,0,&fetchRet);
+		if(ret)
+			return ret;
+		if(!SQL_SUCCEEDED(fetchRet))
+			return fetchRet;
+		jint paramCount;
+		ret = jarrayToInt(env,data,1,&paramCount);
+		if(ret)
+			return ret;
+		if(paramCount == 0)
+			return ret;
+
+		for(int i=0;i<paramCount;i++){
+			jobject val=(jobject) env->GetObjectArrayElement(data, 2+5*i+4);
+			ret = bindResultToVariable(env, val, targetType, pointer,bufferLength, (SQLUINTEGER*)strLenOrInd);
+			if(env->ExceptionCheck()){
+				env->ExceptionDescribe();
+				LOG(1,"Error: JStatement::getData");
+				return SQL_ERROR;
+			}
+			LOG(5, "fetch param (%d,%d,%p,%li,%p)\n",i,targetType,pointer,bufferLength,strLenOrInd);
+		}
+		return ret;
+		return ret;
+	};
+	ret = java_callback(func1,this,column,targetType,pointer,bufferLength,strLenOrInd);
 	return ret;
 }

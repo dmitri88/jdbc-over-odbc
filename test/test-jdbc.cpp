@@ -304,6 +304,15 @@ void test_queries(SQLHANDLE hDbc){
 	//assert(retCount == 4);
 	assert(valInt == 3);
 
+	ret = SQLGetData(hStmt, 1, SQL_C_SLONG, (PTR)&valInt, /*SQLUINTEGER bufLength*/4, /*SQLUINTEGER * strLengthOrIndex*/&retCount);
+	assert(ret == 0);
+	assert(valInt == 3);
+
+	ret = SQLGetData(hStmt, 1, SQL_C_CHAR, (PTR)data, /*SQLUINTEGER bufLength*/1024, /*SQLUINTEGER * strLengthOrIndex*/&retCount);
+	assert(ret == 0);
+	assert(retCount == 1);
+	assert(std::string(data).compare("3")==0);
+
 	ret = SQLFreeStmt(hStmt, SQL_UNBIND);
 	assert(ret == 0);
 

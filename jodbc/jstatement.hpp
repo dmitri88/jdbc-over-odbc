@@ -19,6 +19,7 @@ public:
 	RETCODE execDirect(ustring sql);
 	RETCODE execute();
 	RETCODE prepareStatement(ustring sql);
+	RETCODE getData(SQLUSMALLINT column, SQLSMALLINT targetType, PTR pointer, SQLLEN bufferLength, SQLLEN *strLenOrInd);
 	RETCODE getRowCount(SQLINTEGER * retCount);
 	RETCODE getResultColumnCount(SQLSMALLINT * retCount);
 	RETCODE describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSMALLINT bufLength, SQLSMALLINT *nameLength, SQLSMALLINT * dataType, SQLUINTEGER * colSize, SQLSMALLINT * decimalDigits, SQLSMALLINT * nullable);

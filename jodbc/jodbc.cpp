@@ -685,3 +685,17 @@ RETCODE SQL_API SQLGetDescFieldW(SQLHDESC hdesc, SQLSMALLINT iRecord, SQLSMALLIN
 	LOG(5, "Exiting SQLGetDescFieldW %d (%p,%d,%d)\n",ret,hdesc,iRecord,iField);
 	return ret;
 }
+
+RETCODE SQL_API SQLGetData(HSTMT hstm, SQLUSMALLINT column, SQLSMALLINT targetType, PTR pointer, SQLLEN bufferLength, SQLLEN *strLenOrInd){
+	RETCODE	ret;
+
+	LOG(5, "Entering SQLGetData (%p,%d,%d,%p,%li,%p)\n",hstm,column,targetType,pointer,bufferLength,strLenOrInd);
+	if(!hstm)
+		return SQL_INVALID_HANDLE;
+	JStatement* stmt = (JStatement*)hstm;
+
+	ret = stmt->getData(column, targetType, pointer, bufferLength, strLenOrInd);
+
+	LOG(5, "Exiting SQLGetData %d (%p,%d,%d)\n",ret,hstm,column,targetType);
+	return ret;
+}
