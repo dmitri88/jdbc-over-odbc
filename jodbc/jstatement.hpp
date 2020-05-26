@@ -14,7 +14,8 @@ class JStatement{
 public:
 	JStatement(JDatabase* connection);
 	RETCODE createStatement();
-	RETCODE descriptorField(SQLSMALLINT iRecord, SQLSMALLINT iField, PTR rgbValue, SQLINTEGER cbValueMax, SQLINTEGER *pcbValue);
+	RETCODE getDescriptorField(SQLSMALLINT iRecord, SQLSMALLINT iField, PTR rgbValue, SQLINTEGER cbValueMax, SQLINTEGER *pcbValue);
+	RETCODE setDescriptorField(SQLSMALLINT iRecord, SQLSMALLINT iField, PTR rgbValue, SQLINTEGER cbValueMax);
 	RETCODE freeStatement(SQLUSMALLINT option);
 	RETCODE execDirect(ustring sql);
 	RETCODE execute();

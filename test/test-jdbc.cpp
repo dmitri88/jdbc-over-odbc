@@ -222,25 +222,25 @@ SQLHANDLE create_database(){
 	assert(*((int*)data)==2);
 	assert(retLen==4);
 
-	ret = SQLGetInfoW(hDbc, SQL_MAX_CATALOG_NAME_LEN, &data, 255, &retLen);
+	ret = SQLGetInfoW(hDbc, SQL_MAX_CATALOG_NAME_LEN, &data, 2, NULL);
 	assert(ret == 0);
-	assert(*((int*)data)==128);
-	assert(retLen==2);
+	assert(*((short*)data)==128);
+	//assert(retLen==2);
 
-	ret = SQLGetInfoW(hDbc, SQL_MAX_COLUMN_NAME_LEN, &data, 255, &retLen);
+	ret = SQLGetInfoW(hDbc, SQL_MAX_COLUMN_NAME_LEN, &data, 2, NULL);
 	assert(ret == 0);
-	assert(*((int*)data)==128);
-	assert(retLen==2);
+	assert(*((short*)data)==128);
+	//assert(retLen==2);
 
-	ret = SQLGetInfoW(hDbc, SQL_MAX_SCHEMA_NAME_LEN, &data, 255, &retLen);
+	ret = SQLGetInfoW(hDbc, SQL_MAX_SCHEMA_NAME_LEN, &data, 2, NULL);
 	assert(ret == 0);
-	assert(*((int*)data)==128);
-	assert(retLen==2);
+	assert(*((short*)data)==128);
+	//assert(retLen==2);
 
-	ret = SQLGetInfoW(hDbc, SQL_MAX_TABLE_NAME_LEN, &data, 255, &retLen);
+	ret = SQLGetInfoW(hDbc, SQL_MAX_TABLE_NAME_LEN, &data, 2, NULL);
 	assert(ret == 0);
-	assert(*((int*)data)==128);
-	assert(retLen==2);
+	assert(*((short*)data)==128);
+	//assert(retLen==2);
 
 	ret = SQLGetInfoW(hDbc, SQL_ACTIVE_STATEMENTS, &data, 255, &retLen);
 	assert(ret == 0);
@@ -280,8 +280,9 @@ void test_queries(SQLHANDLE hDbc){
 	ret = SQLAllocHandle( SQL_HANDLE_STMT, hDbc, &hStmt);
 	assert(ret == 0);
 
-	ret = SQLNativeSqlW(hDbc, (SQLWCHAR *)ustring(L"").c_str(),512, NULL, 0, &retCount);
-	assert(ret == 0);
+
+	ret = SQLNativeSqlW(hDbc, (SQLWCHAR *)ustring(L"").c_str(),SQL_VARBINARY, NULL, 0, &retCount);
+	assert(ret == -1);
 
 	ustring sql = ustring(L"SELECT COUNT(*) AS RecordCount FROM t_package");
 	ret = SQLPrepareW(hStmt, (SQLWCHAR*)sql.c_str(),sql.size());
@@ -516,9 +517,9 @@ void test_attributes(SQLHANDLE hStmt){
 	assert(numberValue == 0);
 
 	ret = SQLColAttributeW(hStmt, 1, 1212, data, 1024, &bufLength, &numberValue);
-	assert(ret == 0);
-	assert(bufLength == 0);
-	assert(numberValue == 0);
+	assert(ret == -1);
+	//assert(bufLength == 0);
+	//assert(numberValue == 0);
 
 	ret = SQLColAttributeW(hStmt, 1, SQL_COLUMN_TABLE_NAME, data, 1024, &bufLength, &numberValue);
 	assert(ret == 0);
@@ -536,8 +537,21 @@ void test_attributes(SQLHANDLE hStmt){
 	ret = SQLSetStmtAttrW(hStmt, 11, data, 1024);
 	assert(ret == 0);
 
-	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_ROW_ARRAY_SIZE, (PTR)0x1, -6);
+	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_PARAM_BIND_TYPE, (PTR)10, 0);
 	assert(ret == 0);
+
+	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_ROW_ARRAY_SIZE, (PTR)0x1, SQL_IS_INTEGER);
+	assert(ret == 0);
+
+	ret = SQLSetStmtAttrW(hStmt, SQL_QUERY_TIMEOUT, (PTR)0x12c, SQL_IS_INTEGER);
+	assert(ret == 0);
+
+	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_PARAM_BIND_OFFSET_PTR, data, 0);
+	assert(ret == 0);
+
+	ret = SQLSetDescFieldW(hStmt, 1,SQL_DESC_OCTET_LENGTH_PTR, &numberValue, 0);
+	assert(ret == 0);
+
 
 
 	//6 SQL_CURSOR_TYPE  7 SQL_CONCURRENCY
@@ -545,10 +559,15 @@ void test_attributes(SQLHANDLE hStmt){
 	assert(ret == 0);
 	assert(numberValue == 0);
 	assert((*(SQLSMALLINT*)data) == 0);
+
 	ret = SQLGetStmtAttrW(hStmt, SQL_CONCURRENCY, data, SQL_IS_INTEGER, &numberValue);
 	assert(ret == 0);
 	assert(numberValue == 0);
 	assert((*(SQLINTEGER*)data) == 1);
+
+
+
+
 	//ret = SQLGetStmtAttrW(hStmt, SQL_DESC_BASE_COLUMN_NAME, data, 258, &numberValue);
 	//assert(ret == 0);
 	//assert(numberValue == 0);

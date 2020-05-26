@@ -680,9 +680,22 @@ RETCODE SQL_API SQLGetDescFieldW(SQLHDESC hdesc, SQLSMALLINT iRecord, SQLSMALLIN
 		return SQL_INVALID_HANDLE;
 	JStatement* stmt = (JStatement*)hdesc;
 
-	ret = stmt->descriptorField(iRecord, iField, rgbValue, cbValueMax, pcbValue);
+	ret = stmt->getDescriptorField(iRecord, iField, rgbValue, cbValueMax, pcbValue);
 
 	LOG(5, "Exiting SQLGetDescFieldW %d (%p,%d,%d)\n",ret,hdesc,iRecord,iField);
+	return ret;
+}
+RETCODE SQL_API SQLSetDescFieldW(SQLHDESC hdesc, SQLSMALLINT iRecord, SQLSMALLINT iField, PTR value, SQLINTEGER bufferLength){
+	RETCODE	ret;
+
+	LOG(5, "Entering SQLSetDescFieldW (%p,%d,%d,%p,%li)\n",hdesc,iRecord,iField,value,bufferLength);
+	if(!hdesc)
+		return SQL_INVALID_HANDLE;
+	JStatement* stmt = (JStatement*)hdesc;
+
+	ret = stmt->setDescriptorField(iRecord, iField, value, bufferLength);
+
+	LOG(5, "Exiting SQLSetDescFieldW %d (%p,%d,%d)\n",ret,hdesc,iRecord,iField);
 	return ret;
 }
 

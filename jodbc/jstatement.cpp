@@ -300,9 +300,11 @@ RETCODE JStatement::setStatementAttr(SQLINTEGER	fAttribute, PTR		rgbValue, SQLIN
 		int ret = SQL_SUCCESS;
 		jobject val;
 		jlong stmt = (long long)statement;
-		jlong data = (long long)rgbValue;
-		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "setStatementAttribute", "(JIJ)V");
-		env->CallVoidMethod(statement->connection->entrypointObj, method, stmt,fAttribute,data);
+		jlong data = (long)rgbValue;
+		jlong reval = cbValueMax;
+
+		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "setStatementAttribute", "(JIJJ)V");
+		env->CallVoidMethod(statement->connection->entrypointObj, method, stmt,fAttribute,data,reval);
 		if(env->ExceptionCheck()){
 			env->ExceptionDescribe();
 			LOG(1,"Error: JStatement::setStatementAttr");

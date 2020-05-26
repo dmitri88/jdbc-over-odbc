@@ -138,12 +138,12 @@ public class JniEntrypoint {
 	}
 	
 	
-	public void setStatementAttribute(long stmtId,int attr, long data) {
+	public void setStatementAttribute(long stmtId,int attr, long data, long index) {
 		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
-		stmt.setStatementAttribute(attr,data);	
+		stmt.setStatementAttribute(attr,data,index);	
 	}
 	
 	public Object[] getInfo(int fieldId) {

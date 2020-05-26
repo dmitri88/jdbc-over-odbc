@@ -35,6 +35,7 @@ extern "C" RETCODE SQL_API SQLNumResultCols(HSTMT hstm, SQLSMALLINT * retCount);
 extern "C" RETCODE SQL_API SQLPrepareW(SQLHSTMT hstm, SQLWCHAR *text, SQLINTEGER length);
 extern "C" RETCODE SQL_API SQLRowCount(HSTMT hstm, SQLLEN * retCount);
 extern "C" RETCODE SQL_API SQLSetConnectAttrW(HDBC hdbc, SQLINTEGER	fAttribute, PTR		rgbValue, SQLINTEGER	cbValue);
+extern "C" RETCODE SQL_API SQLSetDescFieldW(SQLHDESC hdesc, SQLSMALLINT iRecord, SQLSMALLINT fieldIdentifier, PTR value, SQLINTEGER bufferLength);
 extern "C" RETCODE SQL_API SQLSetStmtAttrW(SQLHSTMT hstmt, SQLINTEGER	fAttribute, PTR		rgbValue, SQLINTEGER	cbValueMax);
 extern "C" RETCODE SQL_API SQLTablesW(HSTMT hstm,SQLWCHAR *CatalogName, SQLSMALLINT NameLength1, SQLWCHAR *SchemaName, SQLSMALLINT NameLength2, SQLWCHAR *TableName, SQLSMALLINT NameLength3, SQLWCHAR *TableType, SQLSMALLINT NameLength4);
 

@@ -34,6 +34,11 @@ public class OdbcStatement {
 	@Getter
 	private OdbcImpDescriptor impDescriptor = null; 
 	
+	
+	private Long bindDataSize;//size of wide-arrow element.  https://docs.microsoft.com/en-us/sql/odbc/reference/develop-app/binding-arrays-of-parameters?view=sql-server-ver15
+	private Long statementQueryTimeout;
+	private Long bindDataOffset;
+	
 	public OdbcStatement(OdbcDatabase database,long statementId) {
 		this.database=database;
 		this.statementId = statementId;
@@ -102,6 +107,7 @@ public class OdbcStatement {
 		}
 	}
 	
+	@SneakyThrows
 	public void prepareStatement(String sql) {
 		log.debug("JAVA prepareStatement {} {}", statementId, sql);
 		try {
@@ -119,9 +125,12 @@ public class OdbcStatement {
 			OdbcImpDescriptor.remove(impDescriptor);
 			impDescriptor = OdbcImpDescriptor.register(this);
 		} catch (SQLException e) {
-			log.error("execDirect error", e);
+			log.error("prepareStatement error", e);
 			throw new RuntimeException(e);
 		}
+		
+		if(statementQueryTimeout!=null)
+			statement.setQueryTimeout(statementQueryTimeout.intValue());
 	}
 
 	public long getRowCount() {
@@ -197,9 +206,9 @@ public class OdbcStatement {
 			break;
 		default:
 			log.warn("UNDEFINED column attibute:" + attr);
-			// throw new RuntimeException("undefined attr: "+attr);
-			ret = new Object[] {};
-			break;
+			 throw new RuntimeException("undefined attr: "+attr);
+			//ret = new Object[] {};
+			//break;
 		}
 		return ret;
 	}
@@ -247,23 +256,36 @@ public class OdbcStatement {
 			return new Object[] { statementId };
 		default:
 			log.warn("UNDEFINED statement attibute:" + attr);
-			return null;
+			throw new RuntimeException("UNDEFINED statement attibute:" + attr);
+			//return null;
 		}
 	}
 
 	@SneakyThrows
-	public void setStatementAttribute(int attrInt, long data) {
+	public void setStatementAttribute(int attrInt, long data, long index) {
 		OdbcStatementAttribute attr = OdbcStatementAttribute.valueOf(attrInt);
-		log.debug("JAVA setStatementAttribute {} {} {}", statementId, attr != null ? attr : attrInt, data);
+		log.debug("JAVA setStatementAttribute {} {} {} {}", statementId, attr != null ? attr : attrInt, data, index);
 		switch (attr) {
+		case SQL_ATTR_PARAM_BIND_OFFSET_PTR:
+			bindDataOffset = data;
+			break;
+		case SQL_QUERY_TIMEOUT:
+			statementQueryTimeout = data;
+			break;
 		case SQL_ATTR_ROW_ARRAY_SIZE:
 			statement.setFetchSize((int) data);
 			// fetchSize = (int)data;
 			break;
-
+		case SQL_ATTR_PARAM_BIND_TYPE:
+			this.bindDataSize = data;
+			break;
+			
+		case SQL_RETRIEVE_DATA:
+			break;
 		default:
 			log.warn("setStatementAttribute NOT FOUND " + attr);
-			break;
+			throw new RuntimeException("UNDEFINED statement attibute:" + attr);
+			//break;
 		}
 	}
 

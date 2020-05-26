@@ -276,8 +276,9 @@ public class OdbcDatabase {
 	}
 
 	public String getNativeSql(String sql) {
-		if (sql == null)
-			return "";
+		log.debug("JAVA getNativeSql {} ", sql);
+		if (sql == null || sql.trim().isBlank())
+			throw new RuntimeException("getNativeSql is blank");
 		return sql;
 	}
 
