@@ -13,7 +13,7 @@ public class JniEntrypointTest {
 		instance.setConnectionParameter("Debug", "trace");
 		instance.setConnectionParameter("DriverClass", "org.h2.Driver");
 		instance.setConnectionParameter("URL", "jdbc:h2:mem:");
-		instance.connect();
+		instance.connect("DSN=test;");
 	}
 	
 	@Test
@@ -22,7 +22,7 @@ public class JniEntrypointTest {
 		instance.setConnectionParameter("Debug", "trace");
 		instance.setConnectionParameter("DriverClass", "org.h2.Driver");
 		instance.setConnectionParameter("URL", "jdbc:h2:mem:");
-		instance.connect();
+		instance.connect("DSN=test;");
 		
 		long stmtId = 0x100;
 		instance.createStatement(stmtId);

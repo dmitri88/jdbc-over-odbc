@@ -8,8 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.qos.logback.classic.Level;
+import lombok.extern.slf4j.Slf4j;
 
-
+@Slf4j
 public class JniEntrypoint {
 	
 	private OdbcDatabase database;
@@ -33,7 +34,6 @@ public class JniEntrypoint {
 			Level level = Level.valueOf(val.trim().toUpperCase());
 			ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 			root.setLevel(level);
-			//root.setLevel(Level.OFF);
 			return;
 		}
 		
@@ -47,8 +47,8 @@ public class JniEntrypoint {
 		method.invoke(database, val);
 	}
 	
-	public void connect() {
-		database.connect();
+	public String connect(String dsn) {
+		return database.connect(dsn);
 	}
 	
 	public void createStatement(long stmtId) {
@@ -58,6 +58,7 @@ public class JniEntrypoint {
 	public void freeStatement(long stmtId, long option) {
 		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
+			log.error("statement not found {}",stmtId);
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
 		stmt.freeResource(option);
@@ -75,6 +76,7 @@ public class JniEntrypoint {
 	public void execDirect(long stmtId,String sql) {
 		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
+			log.error("statement not found {}",stmtId);
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
 		stmt.execDirect(sql);
@@ -83,6 +85,7 @@ public class JniEntrypoint {
 	public void execute(long stmtId) {
 		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
+			log.error("statement not found {}",stmtId);
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
 		stmt.execute();
@@ -91,6 +94,7 @@ public class JniEntrypoint {
 	public void prepareStatement(long stmtId,String sql) {
 		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
+			log.error("statement not found {}",stmtId);
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
 		stmt.prepareStatement(sql);
@@ -99,6 +103,7 @@ public class JniEntrypoint {
 	public long getRowCount(long stmtId) {
 		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
+			log.error("statement not found {}",stmtId);
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
 		return stmt.getRowCount();
@@ -107,14 +112,22 @@ public class JniEntrypoint {
 	public int getResultColumnCount(long stmtId) {
 		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
+			log.error("statement not found {}",stmtId);
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
+		
+		try {
 		return stmt.getImpDescriptor().getColumnCount();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
 	}
 	
 	public Object[] describeColumn(long stmtId, int colNum) {
 		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
+			log.error("statement not found {}",stmtId);
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
 		return stmt.describeColumn(colNum);
@@ -123,6 +136,7 @@ public class JniEntrypoint {
 	public Object[]  getColumnAttribute(long stmtId, int colNum,int descType) {
 		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
+			log.error("statement not found {}",stmtId);
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
 		return stmt.getColumnAttribute(colNum,descType);
@@ -132,6 +146,7 @@ public class JniEntrypoint {
 	public Object[] getStatementAttribute(long stmtId,int attr) {
 		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
+			log.error("statement not found {}",stmtId);
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
 		return stmt.getStatementAttribute(attr);
@@ -141,6 +156,7 @@ public class JniEntrypoint {
 	public void setStatementAttribute(long stmtId,int attr, long data, long index) {
 		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
+			log.error("statement not found {}",stmtId);
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
 		stmt.setStatementAttribute(attr,data,index);	
@@ -157,6 +173,7 @@ public class JniEntrypoint {
 	public void bindColumn(long stmtId,int column,int type, long dataPtr,long size, long retLength) {
 		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
+			log.error("statement not found {}",stmtId);
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
 		stmt.bindColumn(column, OdbcBindType.valueOf(type), dataPtr, size, retLength);
@@ -165,6 +182,7 @@ public class JniEntrypoint {
 	public Object[] fetch(long stmtId) {
 		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
+			log.error("statement not found {}",stmtId);
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
 		return stmt.fetch();
@@ -173,6 +191,7 @@ public class JniEntrypoint {
 	public int moreResults(long stmtId) {
 		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
+			log.error("statement not found {}",stmtId);
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
 		return stmt.moreResults();
@@ -181,11 +200,13 @@ public class JniEntrypoint {
 	public Object getDescriptorField(long stmtId , int iRecord , int iField) {
 		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
+			log.error("statement not found {}",stmtId);
 			throw new RuntimeException("statement not found "+ stmtId);
 		}	
 		
 		OdbcImpDescriptor descriptor = stmt.getImpDescriptor();
 		if(descriptor == null) {
+			log.error("statement not found {}",stmtId);
 			throw new RuntimeException("descriptor not found "+ stmtId);
 		}	
 		return descriptor.getDescriptorField(iRecord , iField);
@@ -194,6 +215,7 @@ public class JniEntrypoint {
 	public Object[] getData(long stmtId,int column,int type) {
 		OdbcStatement stmt = database.getStatement(stmtId);
 		if(stmt == null) {
+			log.error("statement not found {}",stmtId);
 			throw new RuntimeException("statement not found "+ stmtId);
 		}
 		return stmt.getData(column, OdbcBindType.valueOf(type));

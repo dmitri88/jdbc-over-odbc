@@ -129,9 +129,9 @@ RETCODE JStatement::getResultColumnCount(SQLSMALLINT * retCount){
 	func1 = [](JNIEnv *env,JStatement* statement, SQLSMALLINT * retCount) {
 		jlong stmt = (long long)statement;
 		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "getResultColumnCount", "(J)I");
-		*retCount = env->CallLongMethod(statement->connection->entrypointObj, method, stmt);
+		*retCount = env->CallIntMethod(statement->connection->entrypointObj, method, stmt);
 		if(env->ExceptionCheck()){
-			LOG(1,"Error: JStatement::getRowCount\n");
+			LOG(1,"Error: JStatement::getResultColumnCount\n");
 			return SQL_ERROR;
 		}
 		return SQL_SUCCESS;

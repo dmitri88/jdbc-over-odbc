@@ -84,8 +84,28 @@ SQLHANDLE create_database(){
 
 	ret = SQLGetInfoW(hDbc, SQL_ODBC_VER, &data, 255, NULL);
 	assert(ustring(data).compare(ustring(L"03.80.0000"))==0);
+
 	ret = SQLGetInfoW(hDbc, SQL_DRIVER_ODBC_VER, &data, 255, NULL);
 	assert(ustring(data).compare(ustring(L"03.80"))==0);
+
+	ret = SQLGetInfoW(hDbc, SQL_DATA_SOURCE_READ_ONLY, &data, 255, NULL);
+	assert(ustring(data).compare(ustring(L"N"))==0);
+
+	ret = SQLGetInfoW(hDbc, SQL_IDENTIFIER_QUOTE_CHAR, &data, 255, NULL);
+	assert(ustring(data).compare(ustring(L"\""))==0);
+
+
+	ret = SQLGetInfoW(hDbc, SQL_ODBC_API_CONFORMANCE, &data, 255, NULL);
+	assert(ret == 0);
+	assert(*((short*)data)==2);
+
+	ret = SQLGetInfoW(hDbc, SQL_ODBC_SQL_CONFORMANCE, &data, 255, NULL);
+	assert(ret == 0);
+	assert(*((short*)data)==SQL_OSC_CORE);
+
+
+
+
 
 	short unsigned int *enabledFuncs = (short unsigned int*) malloc(
 			sizeof(UWORD) * SQL_API_ODBC3_ALL_FUNCTIONS_SIZE);
@@ -97,6 +117,20 @@ SQLHANDLE create_database(){
 	assert(ret == 0);
 
 	ret = SQLDriverConnectW(hDbc, NULL, utf8_to_unicode("DSN=Simba;"), 0, NULL,
+			0, &retConnStrLength, 0);
+	assert(ret == 0);
+
+	ret = SQLDriverConnectW(hDbc, NULL, utf8_to_unicode("DSN=Simba;"), 0, data, 1024, &retConnStrLength, 0);
+	assert(ret == 0);
+	assert(ustring(data).compare(ustring(L"DSN=Simba;"))==0);
+	assert(retConnStrLength == 10);
+
+	ret = SQLDriverConnectW(hDbc, NULL, utf8_to_unicode("DSN=Simba"), 0, data, 1024, &retConnStrLength, 0);
+	assert(ret == 0);
+	assert(ustring(data).compare(ustring(L"DSN=Simba;"))==0);
+	assert(retConnStrLength == 10);
+
+	ret = SQLDriverConnectW(hDbc, NULL, utf8_to_unicode(""), 0, NULL,
 			0, &retConnStrLength, 0);
 	assert(ret == 0);
 
@@ -141,6 +175,13 @@ SQLHANDLE create_database(){
 	assert(ret == 0);
 	assert(*((int*)data)==0x1f);
 	assert(retLen==4);
+
+	ret = SQLGetInfoW(hDbc, SQL_POSITIONED_STATEMENTS, &data, 255, &retLen);
+	assert(ret == 0);
+	assert(*((int*)data)==0);
+	assert(retLen==4);
+
+
 
 	ret = SQLGetInfoW(hDbc, SQL_STATIC_SENSITIVITY, &data, 255, &retLen);
 	assert(ret == 0);
@@ -274,6 +315,7 @@ void test_queries(SQLHANDLE hDbc){
 	SQLINTEGER valInt;
 	SQLINTEGER retCount;
 	SQLHANDLE hStmt;
+	SQLSMALLINT smallInt;
 	char data[1024];
 	char retdata[1024];
 
@@ -281,8 +323,14 @@ void test_queries(SQLHANDLE hDbc){
 	assert(ret == 0);
 
 
-	ret = SQLNativeSqlW(hDbc, (SQLWCHAR *)ustring(L"").c_str(),SQL_VARBINARY, NULL, 0, &retCount);
-	assert(ret == -1);
+	ret = SQLNativeSqlW(hDbc, (SQLWCHAR *)ustring(L"SELECT COUNT(*) AS RecordCount FROM t_package").c_str(),SQL_VARBINARY, NULL, 0, &retCount);
+	assert(ret == 0);
+	assert(retCount == 45);
+
+	ret = SQLNativeSqlW(hDbc, (SQLWCHAR *)ustring(L"SELECT COUNT(*) AS RecordCount FROM t_package").c_str(),SQL_VARBINARY, (SQLWCHAR *)data, 46, NULL);
+	assert(ret == 0);
+	assert(ustring((SQLWCHAR *)data).compare(ustring(L"SELECT COUNT(*) AS RecordCount FROM t_package"))==0);
+
 
 	ustring sql = ustring(L"SELECT COUNT(*) AS RecordCount FROM t_package");
 	ret = SQLPrepareW(hStmt, (SQLWCHAR*)sql.c_str(),sql.size());
@@ -319,6 +367,17 @@ void test_queries(SQLHANDLE hDbc){
 
 	ret = SQLMoreResults(hStmt);
 	assert(ret == SQL_NO_DATA);
+
+	//ret = SQLGetDiagFieldW();
+	//assert(ret == 0);
+
+	sql = ustring(L"SELECT * FROM t_package");
+	ret = SQLPrepareW(hStmt, (SQLWCHAR*)sql.c_str(),sql.size());
+	assert(ret == 0);
+
+	ret = SQLNumResultCols (hStmt, &smallInt);
+	assert(ret == 0);
+	assert(smallInt == 23);
 
 }
 
@@ -426,6 +485,20 @@ void test_attributes_3(SQLHANDLE hStmt){
 	assert(colSize == 255);
 	assert(decimalDigits == 0);
 	assert(nullable == 1);
+
+
+	sql = ustring(L"SELECT * FROM t_package");
+	ret = SQLPrepareW(hStmt, (SQLWCHAR*)sql.c_str(),sql.size());
+	assert(ret == 0);
+
+	ret = SQLDescribeColW(hStmt, 1, colName, 1024, &nameLength, &dataType, &colSize, &decimalDigits, &nullable);
+	assert(ret == 0);
+	assert(nameLength == 10);
+	assert(dataType == 4);
+	assert(colSize == 10);
+	assert(decimalDigits == 0);
+	assert(nullable == 0);
+
 
 }
 

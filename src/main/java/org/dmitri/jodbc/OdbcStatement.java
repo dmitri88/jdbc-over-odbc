@@ -26,6 +26,7 @@ public class OdbcStatement {
 	@Getter
 	private final long statementId;
 
+	@Getter
 	private PreparedStatement statement;
 	@Getter
 	private ResultSet result;
@@ -43,6 +44,10 @@ public class OdbcStatement {
 		this.database=database;
 		this.statementId = statementId;
 		impDescriptor = OdbcImpDescriptor.register(this);
+	}
+	
+	public ResultSetMetaData getMetaData() throws SQLException {
+		return result!=null? result.getMetaData():statement.getMetaData();
 	}
 
 	public void freeResource(long option) {
@@ -155,7 +160,7 @@ public class OdbcStatement {
 		log.debug("JAVA describeColumn {} {}", statementId, colNum);
 		Object[] ret = new Object[6];
 		try {
-			ResultSetMetaData rsmd = result.getMetaData();
+			ResultSetMetaData rsmd = getMetaData();
 			ret[0] = rsmd.getColumnName(colNum);
 			ret[1] = rsmd.getColumnLabel(colNum);
 			ret[2] = Integer.valueOf(rsmd.getColumnType(colNum));
@@ -194,7 +199,7 @@ public class OdbcStatement {
 			ret = new Object[] {impDescriptor.getColumnLabel(colNum)};
 			break;
 		case SQL_COLUMN_AUTO_INCREMENT:
-			ResultSetMetaData rsmd = result.getMetaData();
+			ResultSetMetaData rsmd = getMetaData();
 			ret = new Object[] { rsmd.isAutoIncrement(colNum) ? 1L : 0L };
 			break;
 		case SQL_COLUMN_TABLE_NAME:
@@ -215,7 +220,7 @@ public class OdbcStatement {
 
 	private Long getColumnAttributeByDisplaySize(int colNum) {
 		try {
-			ResultSetMetaData rsmd = result.getMetaData();
+			ResultSetMetaData rsmd = getMetaData();
 			return Long.valueOf(rsmd.getColumnDisplaySize(colNum));
 		} catch (SQLException e) {
 			log.error("getColumnAttributeByUnsigned error", e);
@@ -230,7 +235,7 @@ public class OdbcStatement {
 
 	private Long getColumnAttributeByUnsigned(int colNum) {
 		try {
-			ResultSetMetaData rsmd = result.getMetaData();
+			ResultSetMetaData rsmd = getMetaData();
 			return Long.valueOf(rsmd.isSigned(colNum) ? 1 : 0);
 		} catch (SQLException e) {
 			log.error("getColumnAttributeByUnsigned error", e);

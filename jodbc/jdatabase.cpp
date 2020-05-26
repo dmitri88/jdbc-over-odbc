@@ -16,6 +16,7 @@ using namespace std;
 
 JDatabase::JDatabase(JavaVM *env) {
 	this->jvm = env;
+	this->connected = false;
 }
 
 void JDatabase::addPath(const std::string &path) {
@@ -88,18 +89,23 @@ void JDatabase::addPath(const std::string &path) {
 	//env->CallVoidMethod(classLoaderInstance, addUrlMethod, urlInstance);
 }
 
-RETCODE JDatabase::connect(SQLWCHAR *szConnStrIn, SQLSMALLINT cbConnStrIn) {
+RETCODE JDatabase::connect(SQLWCHAR *szConnStrIn, SQLSMALLINT cbConnStrIn,SQLWCHAR *szConnStrOut, SQLSMALLINT cbConnStrOutMax, SQLSMALLINT *pcbConnStrOut) {
 	SQLWCHAR buffer[4096];
 	ustring inputstring(szConnStrIn);
 	int ret=SQL_SUCCESS;
+
+	if(this->connected && inputstring.size()==0)
+		return ret;
 
 	int pos_start = inputstring.find(ustring(L"DSN=").c_str());
 	if (pos_start == -1)
 		return SQL_ERROR;
 
 	int pos_end = inputstring.find(ustring(L";").c_str(), pos_start + 4);
-	if (pos_end == -1)
-		return SQL_ERROR;
+	if (pos_end == -1){
+		pos_end = inputstring.size();
+		//return SQL_ERROR;
+	}
 
 
 
@@ -124,16 +130,13 @@ RETCODE JDatabase::connect(SQLWCHAR *szConnStrIn, SQLSMALLINT cbConnStrIn) {
 				ustring(L"odbc.ini").c_str());
 		if (ret1 > 0) {
 			ustring val(buffer, ret1);
-//			if (i == 0) {
-//				this->addPath(val.utf8());
-//			}
 			ret = this->setConnectionParameter(prop, val);
 			if(ret){
 				return SQL_ERROR;
 			}
 		}
 	}
-	return this->javaConnect();
+	return this->javaConnect(inputstring,szConnStrOut,cbConnStrOutMax,pcbConnStrOut);
 }
 
 RETCODE JDatabase::setConnectionParameter(ustring prop, ustring val) {
@@ -200,6 +203,7 @@ RETCODE JDatabase::getInfo(SQLUSMALLINT fInfoType, PTR rgbInfoValue, SQLSMALLINT
 			return SQL_ERROR;
 		}
 		switch(fInfoType){
+		case SQL_DATA_SOURCE_READ_ONLY:
 		case SQL_NEED_LONG_DATA_LEN:
 		case SQL_MULT_RESULT_SETS:
 		case SQL_DRIVER_NAME:
@@ -234,10 +238,13 @@ RETCODE JDatabase::getInfo(SQLUSMALLINT fInfoType, PTR rgbInfoValue, SQLSMALLINT
 		case SQL_TXN_CAPABLE:
 		case SQL_ACTIVE_STATEMENTS:
 		case SQL_POS_OPERATIONS:
+		case SQL_POSITIONED_STATEMENTS:
 			ret = jarrayToInt(env, data, 0, rgbInfoValue, cbInfoValueMax);
 			if(pcbInfoValue!=NULL)
 				*pcbInfoValue = 4;
 			break;
+		case SQL_ODBC_API_CONFORMANCE:
+		case SQL_ODBC_SQL_CONFORMANCE:
 		case SQL_MAX_CATALOG_NAME_LEN:
 		case SQL_MAX_COLUMN_NAME_LEN:
 		case SQL_MAX_SCHEMA_NAME_LEN:
@@ -283,24 +290,25 @@ RETCODE JDatabase::getNativeSql(ustring sql,SQLWCHAR * out,SQLUINTEGER	cbSqlStrM
 		//jlong attr = (long long)fAttribute;
 		//jlong val = (long long)cbValue;
 		jmethodID method = env->GetMethodID(connection->entrypointClass, "getNativeSql", "(Ljava/lang/String;)Ljava/lang/String;");
-		jstring ret = (jstring)env->CallObjectMethod(connection->entrypointObj, method, to_jstring(sql));
+		jstring response = (jstring)env->CallObjectMethod(connection->entrypointObj, method, to_jstring(sql));
+		int ret = SQL_SUCCESS;
 		if(env->ExceptionCheck()){
 			env->ExceptionDescribe();
 			LOG(1,"Error: JDatabase::getNativeSql");
 			return SQL_ERROR;
 		}
-		if(ret == NULL){
+		if(response == NULL){
 			LOG(1,"Error: JDatabase::getNativeSql missing response");
 			return SQL_ERROR;
 		}
-		ustring retString = jstring_to_ustring(env,ret);
+		ustring retString = jstring_to_ustring(env,response);
 		if(out != NULL){
-			strcpy(out,cbSqlStrMax,retString);
+			ret = strcpy(out,cbSqlStrMax,retString);
 		}
 		if(pcbSqlStr != NULL){
 			*pcbSqlStr = retString.size();
 		}
-		return SQL_SUCCESS;
+		return ret;
 	};
 	ret = java_callback(func1,this,sql,out,cbSqlStrMax,pcbSqlStr);
 	return ret;
@@ -308,20 +316,33 @@ RETCODE JDatabase::getNativeSql(ustring sql,SQLWCHAR * out,SQLUINTEGER	cbSqlStrM
 }
 
 
-RETCODE JDatabase::javaConnect() {
+RETCODE JDatabase::javaConnect(ustring dsn, SQLWCHAR *szConnStrOut, SQLSMALLINT cbConnStrOutMax, SQLSMALLINT *pcbConnStrOut) {
 	int ret;
-	std::function<int(JNIEnv*,JDatabase* database)> func1;
-	func1 = [](JNIEnv *env,JDatabase* database) {
-		jmethodID method = env->GetMethodID(database->entrypointClass, "connect", "()V");
-		env->CallVoidMethod(database->entrypointObj, method);
+	std::function<int(JNIEnv*,JDatabase* database,ustring dsn, SQLWCHAR *szConnStrOut, SQLSMALLINT cbConnStrOutMax, SQLSMALLINT *pcbConnStrOut)> func1;
+	func1 = [](JNIEnv *env,JDatabase* database,ustring dsn, SQLWCHAR *szConnStrOut, SQLSMALLINT cbConnStrOutMax, SQLSMALLINT *pcbConnStrOut) {
+		int ret = SQL_SUCCESS;
+		jmethodID method = env->GetMethodID(database->entrypointClass, "connect", "(Ljava/lang/String;)Ljava/lang/String;");
+		jstring response = (jstring)env->CallObjectMethod(database->entrypointObj, method, to_jstring(dsn));
 		if(env->ExceptionCheck()){
 			env->ExceptionDescribe();
 			LOG(1,"Error: JDatabase::javaConnect");
 			return SQL_ERROR;
 		}
-		return SQL_SUCCESS;
+		if(response == NULL){
+			LOG(1,"Error: JDatabase::javaConnect missing response");
+			return SQL_ERROR;
+		}
+		ustring retString = jstring_to_ustring(env,response);
+		if(szConnStrOut != NULL){
+			ret = strcpy(szConnStrOut,cbConnStrOutMax,retString);
+		}
+		if(pcbConnStrOut != NULL){
+			*pcbConnStrOut = retString.size();
+		}
+		database->connected=true;
+		return ret;
 	};
-	ret = java_callback(func1,this);
+	ret = java_callback(func1,this,dsn,szConnStrOut,cbConnStrOutMax,pcbConnStrOut);
 	return ret;
 }
 

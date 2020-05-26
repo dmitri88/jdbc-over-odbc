@@ -16,7 +16,7 @@ class JDatabase{
 public:
 	JDatabase(JavaVM* jvm);
 	RETCODE preInitConnection();
-	RETCODE connect(SQLWCHAR *szConnStrIn, SQLSMALLINT cbConnStrIn);
+	RETCODE connect(SQLWCHAR *szConnStrIn, SQLSMALLINT cbConnStrIn,SQLWCHAR *szConnStrOut, SQLSMALLINT cbConnStrOutMax, SQLSMALLINT *pcbConnStrOut);
 	RETCODE setConnectionParameter(ustring prop, ustring val);
 	RETCODE getConnectionAttr(SQLINTEGER fAttribute, SQLPOINTER rgbValue, SQLUINTEGER cbValueMax, SQLUINTEGER *pcbValue);
 	RETCODE setConnectionAttr(SQLINTEGER fAttribute, PTR rgbValue, SQLUINTEGER	cbValue);
@@ -27,8 +27,9 @@ public:
 	jobject entrypointObj = NULL;
 private:
 	JavaVM* jvm;
+	bool connected;
 	void addPath( const std::string& path);
-	RETCODE javaConnect();
+	RETCODE javaConnect(ustring dsn, SQLWCHAR *szConnStrOut, SQLSMALLINT cbConnStrOutMax, SQLSMALLINT *pcbConnStrOut);
 };
 
 

@@ -62,6 +62,11 @@ RETCODE SQL_API SQLAllocHandle(SQLSMALLINT handleType, SQLHANDLE parentHandle, S
 	return ret;
 }
 
+RETCODE SQL_API SQLAllocStmt(HDBC hdbc, HSTMT * hstmt){
+	LOG(5, "Entering SQLAllocStmt (%p,%p)\n",hdbc,hstmt);
+	return SQL_ERROR;
+}
+
 RETCODE SQL_API SQLColAttributeW(HSTMT hstmt,SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLLEN *pfDesc){
 	int ret;
 	LOG(5, "Entering SQLColAttributeW (%p,%d,%d,%p,%d,%p,%p)\n",hstmt,icol,fDescType,rgbDesc,cbDescMax,pcbDesc,pfDesc);
@@ -98,7 +103,7 @@ SQLConnectW(HDBC hdbc,
 	strcpy(data+ustring(data).size(),300,ustring(L";"));
 	ustring dsn = ustring(data);
 	JDatabase	*db = (JDatabase *) hdbc;
-	ret = db->connect((SQLWCHAR*)dsn.c_str(), dsn.size());
+	ret = db->connect((SQLWCHAR*)dsn.c_str(), dsn.size(),NULL,0,NULL);
 	return ret;
 
 }
@@ -127,11 +132,10 @@ RETCODE SQL_API SQLDriverConnectW(HDBC hdbc, HWND hwnd, SQLWCHAR *szConnStrIn, S
 {
 	RETCODE	ret;
 	JDatabase	*db = (JDatabase *) hdbc;
-
 	LOG(5, "Entering SQLDriverConnectW (%p,%p,%s,%i,%i)\n",hdbc,hwnd,unicode_to_utf8(szConnStrIn),cbConnStrIn,fDriverCompletion);
 	if(pcbConnStrOut!=NULL)
 		*pcbConnStrOut = 0;
-	ret = db->connect(szConnStrIn, cbConnStrIn);
+	ret = db->connect(szConnStrIn, cbConnStrIn, szConnStrOut, cbConnStrOutMax, pcbConnStrOut);
 	if(ret)
 		return ret;
 	LOG(5, "Exiting SQLDriverConnectW %d:(%p,%p,%s,%i,%i)\n",ret,hdbc,hwnd,unicode_to_utf8(szConnStrIn),cbConnStrIn,fDriverCompletion);

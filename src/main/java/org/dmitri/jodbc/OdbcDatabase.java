@@ -37,7 +37,8 @@ public class OdbcDatabase {
 
 	private Map<Integer, DataTypeInfo> infos = new HashMap<>();
 
-	public void connect() {
+	public String connect(String dsn) {
+		log.debug("JAVA connect {}",dsn);
 		try {
 			Class.forName(driverclass);
 		} catch (ClassNotFoundException e) {
@@ -52,6 +53,10 @@ public class OdbcDatabase {
 			log.error("Connection Failed! Check output console");
 			throw new RuntimeException(e);
 		}
+		if(dsn.endsWith(";"))
+			return dsn;
+		else
+			return dsn + ";";
 	}
 
 	public DataTypeInfo getTypeInfo(int typeId) {
@@ -160,6 +165,15 @@ public class OdbcDatabase {
 		ret = new Object[1];
 
 		switch (attr) {
+		case SQL_DATA_SOURCE_READ_ONLY:
+			ret[0] = "N";
+			break;
+		case SQL_ODBC_SQL_CONFORMANCE:
+			ret[0] = Integer.valueOf(1);
+			break;		
+		case SQL_ODBC_API_CONFORMANCE:
+			ret[0] = Integer.valueOf(2);
+			break;
 		case SQL_DRIVER_NAME:
 			ret[0] = "msodbcsql17.dl";
 			break;
@@ -202,6 +216,9 @@ public class OdbcDatabase {
 			break;
 		case SQL_POS_OPERATIONS:
 			ret[0] = Integer.valueOf(0x1f);
+			break;
+		case SQL_POSITIONED_STATEMENTS:
+			ret[0] = Integer.valueOf(0x0);  //??? SQL_PS_POSITIONED_DELETE | 			   SQL_PS_POSITIONED_UPDATE | 			   SQL_PS_SELECT_FOR_UPDATE
 			break;
 		case SQL_STATIC_SENSITIVITY:
 			ret[0] = Integer.valueOf(5);

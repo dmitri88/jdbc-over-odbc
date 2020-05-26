@@ -1,6 +1,5 @@
 package org.dmitri.jodbc;
 
-import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -39,8 +38,12 @@ public class OdbcImpDescriptor {
 		return new OdbcImpDescriptor(odbcStatement);
 	}
 	
-	private ResultSet getResult() {
-		return statement.getResult();
+//	private ResultSet getResult() {
+//		return statement.getResult();
+//	}
+	
+	private ResultSetMetaData getMetaData() throws SQLException {
+		return statement.getMetaData();
 	}
 
 	public Object getDescriptorField(int iRecord, int iField) {
@@ -76,7 +79,7 @@ public class OdbcImpDescriptor {
 	
 	private Long getColumnScale(int iRecord) {
 		try {
-			ResultSetMetaData rsmd = getResult().getMetaData();
+			ResultSetMetaData rsmd = getMetaData();
 			return  Long.valueOf(rsmd.getScale(iRecord));
 		} catch (SQLException e) {
 			log.error("getColumnScale error", e);
@@ -87,7 +90,7 @@ public class OdbcImpDescriptor {
 	public int getColumnCount() {
 		int columnsNumber;
 		try {
-			ResultSetMetaData rsmd = getResult().getMetaData();
+			ResultSetMetaData rsmd = getMetaData();
 			columnsNumber = rsmd.getColumnCount();
 		} catch (SQLException e) {
 			log.error("getResultColumnCount error", e);
@@ -98,7 +101,7 @@ public class OdbcImpDescriptor {
 	
 	public String getColumnLabel(int colNum) {
 		try {
-			ResultSetMetaData rsmd = getResult().getMetaData();
+			ResultSetMetaData rsmd = getMetaData();
 			String ret =  rsmd.getColumnLabel(colNum);
 			return ret;
 		} catch (SQLException e) {
@@ -109,7 +112,7 @@ public class OdbcImpDescriptor {
 	
 	public Long getColumnAttributeByLength(int colNum) {
 		try {
-			ResultSetMetaData rsmd = getResult().getMetaData();
+			ResultSetMetaData rsmd = getMetaData();
 			return Long.valueOf(rsmd.getPrecision(colNum));
 		} catch (SQLException e) {
 			log.error("getColumnAttributeByLength error", e);
@@ -119,7 +122,7 @@ public class OdbcImpDescriptor {
 	
 	public String getColumnTypeName(int colNum) {
 		try {
-			ResultSetMetaData rsmd = getResult().getMetaData();
+			ResultSetMetaData rsmd = getMetaData();
 			String ret =  rsmd.getColumnTypeName(colNum);
 			return ret;
 		} catch (SQLException e) {
