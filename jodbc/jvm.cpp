@@ -188,6 +188,50 @@ RETCODE jarrayToString(JNIEnv* env, jobjectArray data, int pos, SQLPOINTER rgbDe
 	return ret;
 }
 
+RETCODE jlongToLong(jlong valInt,SQLINTEGER * numberData,SQLPOINTER rawData, SQLSMALLINT rawDataMax, SQLSMALLINT  *rawDataType){
+	if(numberData) {
+		*numberData = valInt;
+	}
+	if(rawData){
+		int dataType=0;
+		SQLSMALLINT returnDataType;
+		if(rawDataMax<0)
+			dataType =rawDataMax;
+		if((int)rawDataType <0 && dataType==0)
+			dataType =(int)rawDataType;
+
+		if(dataType == SQL_IS_POINTER){
+			returnDataType = SQL_IS_INTEGER;
+			*(SQLINTEGER *)rawData=(SQLINTEGER)valInt;
+		}
+		else if(rawDataMax ==4 || dataType == SQL_IS_INTEGER){
+			returnDataType = SQL_IS_INTEGER;
+			*(SQLINTEGER *)rawData=(SQLINTEGER)valInt;
+		}
+		else if (rawDataMax ==4 || dataType == SQL_IS_UINTEGER){
+			returnDataType = SQL_IS_UINTEGER;
+			*(SQLUINTEGER *)rawData=(SQLUINTEGER)valInt;
+		}
+		else if(rawDataMax ==2 || dataType == SQL_IS_SMALLINT){
+			returnDataType = SQL_IS_SMALLINT;
+			*(SQLSMALLINT *)rawData=(SQLSMALLINT)valInt;
+		}
+		else if (rawDataMax ==2 || dataType == SQL_IS_USMALLINT){
+			returnDataType = SQL_IS_USMALLINT;
+			*(SQLUSMALLINT *)rawData=(SQLUSMALLINT)valInt;
+		}
+		else {
+			LOG(1,"jlongToLong incorrect size %d",rawDataMax);
+			return SQL_ERROR;
+		}
+		if(rawDataType)
+			*rawDataType = returnDataType;
+
+
+	}
+	return SQL_SUCCESS;
+}
+
 RETCODE jarrayToLong(JNIEnv* env, jobjectArray data,int arrayPos, SQLINTEGER * numberData,SQLPOINTER rawData, SQLSMALLINT rawDataMax, SQLSMALLINT  *rawDataType){
 	jobject val=(jobject) env->GetObjectArrayElement(data, arrayPos);
 	if(env->ExceptionCheck()){
@@ -197,43 +241,7 @@ RETCODE jarrayToLong(JNIEnv* env, jobjectArray data,int arrayPos, SQLINTEGER * n
 
 
 	SQLINTEGER valInt = jlong_to_long(env,val);
-	if(numberData) {
-		*numberData = valInt;
-	}
-	if(rawData){
-		int dataType=0;
-		if(rawDataMax<0)
-			dataType =rawDataMax;
-		if((int)rawDataType <0 && dataType==0)
-			dataType =(int)rawDataType;
-
-		if(dataType == SQL_IS_POINTER){
-			*rawDataType = SQL_IS_INTEGER;
-			*(SQLINTEGER *)rawData=(SQLINTEGER)valInt;
-		}
-		else if(rawDataMax ==4 || dataType == SQL_IS_INTEGER){
-			*rawDataType = SQL_IS_INTEGER;
-			*(SQLINTEGER *)rawData=(SQLINTEGER)valInt;
-		}
-		else if (rawDataMax ==4 || dataType == SQL_IS_UINTEGER){
-			*rawDataType = SQL_IS_UINTEGER;
-			*(SQLUINTEGER *)rawData=(SQLUINTEGER)valInt;
-		}
-		else if(rawDataMax ==2 || dataType == SQL_IS_SMALLINT){
-			*rawDataType = SQL_IS_SMALLINT;
-			*(SQLSMALLINT *)rawData=(SQLSMALLINT)valInt;
-		}
-		else if (rawDataMax ==2 || dataType == SQL_IS_USMALLINT){
-			*rawDataType = SQL_IS_USMALLINT;
-			*(SQLUSMALLINT *)rawData=(SQLUSMALLINT)valInt;
-		}
-		else {
-			LOG(1,"getLongFromArrayObject incorrect size %d",rawDataMax);
-			return SQL_ERROR;
-		}
-
-	}
-	return SQL_SUCCESS;
+	return jlongToLong(valInt,numberData,rawData,rawDataMax,rawDataType);
 }
 
 RETCODE jstringToChar(JNIEnv *env, jstring data, SQLCHAR* pointer, SQLUINTEGER maxStringLength,SQLUINTEGER *retByteSize){

@@ -220,4 +220,13 @@ public class JniEntrypoint {
 		}
 		return stmt.getData(column, OdbcBindType.valueOf(type));
 	}
+	
+	public Object getDiagFieldStatement(long stmtId, int iRecord,int fDiagField) {
+		OdbcStatement stmt = database.getStatement(stmtId);
+		if(stmt == null) {
+			log.error("statement not found {}",stmtId);
+			throw new RuntimeException("statement not found "+ stmtId);
+		}	
+		return stmt.getDiagField(iRecord,fDiagField);
+	}
 }

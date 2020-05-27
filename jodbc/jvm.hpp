@@ -32,6 +32,7 @@ extern RETCODE jarrayToShort(JNIEnv *env, jobjectArray data, int pos, jshort* po
 extern RETCODE jarrayToShort(JNIEnv *env, jobjectArray array, int pos, PTR pointer, SQLUINTEGER maxSize);
 extern RETCODE jarrayToLong(JNIEnv *env, jobjectArray data, int pos, jlong* pointer);
 extern RETCODE jarrayToLong(JNIEnv* env, jobjectArray data,int arrayPos, SQLINTEGER * numberData,SQLPOINTER rawData, SQLSMALLINT rawDataMax, SQLSMALLINT  *rawDataType);
+extern RETCODE jlongToLong(jlong data,SQLINTEGER * numberData,SQLPOINTER rawData, SQLSMALLINT rawDataMax, SQLSMALLINT  *rawDataType);
 extern RETCODE jstringToString(JNIEnv *env, jstring data, SQLWCHAR* pointer, SQLUINTEGER maxStringLength,SQLUINTEGER *retByteSize);
 extern RETCODE jstringToChar(JNIEnv *env, jstring data, SQLCHAR* pointer, SQLUINTEGER maxStringLength,SQLUINTEGER *retByteSize);
 

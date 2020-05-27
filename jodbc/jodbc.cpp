@@ -313,7 +313,25 @@ RETCODE SQL_API SQLGetFunctions(HDBC ConnectionHandle, SQLUSMALLINT FunctionId, 
 	return SQL_SUCCESS;
 }
 
+RETCODE SQL_API SQLGetDiagFieldW(SQLSMALLINT	fHandleType, SQLHANDLE		handle, SQLSMALLINT	iRecord, SQLSMALLINT	fDiagField, SQLPOINTER		rgbDiagInfo, SQLSMALLINT	cbDiagInfoMax, SQLSMALLINT   *pcbDiagInfo){
+	RETCODE	ret;
 
+	JStatement* stmt;
+
+	LOG(5, "Entering SQLGetDiagFieldW (%d,%p,%d,%d,%p,%d,%p)\n",fHandleType,handle,iRecord,fDiagField,rgbDiagInfo,cbDiagInfoMax,pcbDiagInfo);
+	switch(fHandleType){
+	case SQL_HANDLE_STMT:
+		stmt = (JStatement*)handle;
+		ret = stmt->getDiagField(iRecord,fDiagField,rgbDiagInfo,cbDiagInfoMax,pcbDiagInfo);
+		break;
+	default:
+		LOG(5, "Error Handle type not recognized\n");
+		ret = SQL_ERROR;
+	}
+
+	LOG(5, "Exiting SQLGetDiagFieldW %d\n",ret);
+	return ret;
+}
 
 RETCODE SQL_API
 SQLGetDiagRecW(SQLSMALLINT fHandleType,
@@ -358,6 +376,8 @@ RETCODE  SQL_API SQLGetInfoW(HDBC hdbc,SQLUSMALLINT fInfoType, PTR rgbInfoValue,
 		LOG(5, "Exiting SQLGetInfoW %d (%p,%hhi,%p,%hi,%d)\n",ret,hdbc,fInfoType,rgbInfoValue,cbInfoValueMax,POINTER_VAL(pcbInfoValue));
 		return ret;
 	}
+	LOG(2, "WARN fallback\n");
+
 	//local fallback
 	switch(fInfoType){
 		case SQL_POS_OPERATIONS:		/* ODBC 2.0 */

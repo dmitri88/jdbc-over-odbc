@@ -368,8 +368,8 @@ void test_queries(SQLHANDLE hDbc){
 	ret = SQLMoreResults(hStmt);
 	assert(ret == SQL_NO_DATA);
 
-	//ret = SQLGetDiagFieldW();
-	//assert(ret == 0);
+	ret = SQLGetDiagFieldW(SQL_HANDLE_STMT,hStmt,0,SQL_DIAG_CURSOR_ROW_COUNT,(SQLPOINTER)data,1024,&smallInt);
+	assert(ret == 0);
 
 	sql = ustring(L"SELECT * FROM t_package");
 	ret = SQLPrepareW(hStmt, (SQLWCHAR*)sql.c_str(),sql.size());

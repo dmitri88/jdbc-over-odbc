@@ -14,8 +14,6 @@ extern "C" RETCODE SQL_API SQLBindCol(HSTMT hstmt, SQLUSMALLINT column, SQLSMALL
 extern "C" RETCODE SQL_API SQLColAttributeW(HSTMT hstmt,SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLLEN *numValue);
 extern "C" RETCODE SQL_API SQLColumnsW(HSTMT hstm, SQLWCHAR *CatalogName, SQLSMALLINT NameLength1, SQLWCHAR *SchemaName, SQLSMALLINT NameLength2, SQLWCHAR *TableName, SQLSMALLINT NameLength3, SQLWCHAR *ColumnName, SQLSMALLINT NameLength4);
 extern "C" RETCODE SQL_API SQLConnectW(HDBC hdbc, SQLWCHAR *ServerName, SQLSMALLINT NameLength1, SQLWCHAR *UserName, SQLSMALLINT NameLength2, SQLWCHAR *Authentication, SQLSMALLINT NameLength3);
-extern "C" RETCODE SQL_API SQLGetData(HSTMT hstm, SQLUSMALLINT column, SQLSMALLINT targetType, PTR pointer, SQLLEN bufferLength, SQLLEN *StrLen_or_Ind);
-extern "C" RETCODE SQL_API SQLGetDescFieldW(SQLHDESC hdesc, SQLSMALLINT iRecord, SQLSMALLINT iField, PTR rgbValue, SQLINTEGER cbValueMax, SQLINTEGER *pcbValue);
 extern "C" RETCODE SQL_API SQLDescribeColW(HSTMT hstm, SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSMALLINT bufLength, SQLSMALLINT *nameLength, SQLSMALLINT * dataType, SQLUINTEGER * colSize, SQLSMALLINT * decimalDigits, SQLSMALLINT * nullable);
 extern "C" RETCODE SQL_API SQLDisconnect(HDBC hdbc);
 extern "C" RETCODE SQL_API SQLDriverConnectW(HDBC hdbc, HWND hwnd, SQLWCHAR *szConnStrIn, SQLSMALLINT cbConnStrIn, SQLWCHAR *szConnStrOut, SQLSMALLINT cbConnStrOutMax, SQLSMALLINT *pcbConnStrOut, SQLUSMALLINT fDriverCompletion);
@@ -25,6 +23,9 @@ extern "C" RETCODE SQL_API SQLFetch(HSTMT hstm);
 extern "C" RETCODE SQL_API SQLFreeHandle(SQLSMALLINT HandleType, SQLHANDLE Handle);
 extern "C" RETCODE SQL_API SQLFreeStmt(HSTMT hstm, SQLUSMALLINT Option);
 extern "C" RETCODE SQL_API SQLGetConnectAttrW(SQLHDBC hdbc, SQLINTEGER fAttribute, SQLPOINTER rgbValue, SQLINTEGER cbValueMax, SQLINTEGER *pcbValue);
+extern "C" RETCODE SQL_API SQLGetData(HSTMT hstm, SQLUSMALLINT column, SQLSMALLINT targetType, PTR pointer, SQLLEN bufferLength, SQLLEN *StrLen_or_Ind);
+extern "C" RETCODE SQL_API SQLGetDescFieldW(SQLHDESC hdesc, SQLSMALLINT iRecord, SQLSMALLINT iField, PTR rgbValue, SQLINTEGER cbValueMax, SQLINTEGER *pcbValue);
+extern "C" RETCODE SQL_API SQLGetDiagFieldW(SQLSMALLINT	fHandleType, SQLHANDLE		handle, SQLSMALLINT	iRecord, SQLSMALLINT	fDiagField, SQLPOINTER		rgbDiagInfo, SQLSMALLINT	cbDiagInfoMax, SQLSMALLINT   *pcbDiagInfo);
 extern "C" RETCODE SQL_API SQLGetDiagRecW(SQLSMALLINT fHandleType, SQLHANDLE	handle, SQLSMALLINT	iRecord, SQLWCHAR	*szSqlState, SQLINTEGER	*pfNativeError, SQLWCHAR	*szErrorMsg, SQLSMALLINT	cbErrorMsgMax, SQLSMALLINT	*pcbErrorMsg);
 extern "C" RETCODE SQL_API SQLGetFunctions(HDBC hdbc, SQLUSMALLINT FunctionId, SQLUSMALLINT *Supported);
 extern "C" RETCODE SQL_API SQLGetInfoW(HDBC hdbc, SQLUSMALLINT InfoType, PTR InfoValue, SQLSMALLINT BufferLength, SQLSMALLINT *StringLength);

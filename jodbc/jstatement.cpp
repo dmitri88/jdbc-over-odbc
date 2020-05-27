@@ -490,3 +490,26 @@ RETCODE JStatement::getData(SQLUSMALLINT column, SQLSMALLINT targetType, PTR poi
 	ret = java_callback(func1,this,column,targetType,pointer,bufferLength,strLenOrInd);
 	return ret;
 }
+
+RETCODE JStatement::getDiagField(SQLSMALLINT	iRecord, SQLSMALLINT	fDiagField, SQLPOINTER		rgbDiagInfo, SQLSMALLINT	cbDiagInfoMax, SQLSMALLINT   *pcbDiagInfo){
+	int ret;
+	std::function<int(JNIEnv* env,JStatement* statement,SQLSMALLINT	iRecord, SQLSMALLINT	fDiagField, SQLPOINTER		rgbDiagInfo, SQLSMALLINT	cbDiagInfoMax, SQLSMALLINT   *pcbDiagInfo)> func1;
+	func1 = [](JNIEnv *env,JStatement* statement,SQLSMALLINT	iRecord, SQLSMALLINT	fDiagField, SQLPOINTER		rgbDiagInfo, SQLSMALLINT	cbDiagInfoMax, SQLSMALLINT   *pcbDiagInfo) {
+		int ret = SQL_SUCCESS;
+		jlong stmt = (long long)statement;
+		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "getDiagFieldStatement", "(JII)Ljava/lang/Object;");
+		jobject response = env->CallObjectMethod(statement->connection->entrypointObj, method, stmt,(int)iRecord,(int)fDiagField);
+		if(env->ExceptionCheck()){
+			env->ExceptionDescribe();
+			LOG(1,"Error: JStatement::fetch");
+			return SQL_ERROR;
+		}
+		jlong longVal = jlong_to_long(env,response);
+		ret = jlongToLong(longVal,NULL,rgbDiagInfo,4,NULL);
+		return ret;
+	};
+	ret = java_callback(func1,this,iRecord,fDiagField,rgbDiagInfo,cbDiagInfoMax,pcbDiagInfo);
+	return ret;
+
+	return SQL_ERROR;
+}

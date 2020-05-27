@@ -16,6 +16,7 @@ public:
 	RETCODE createStatement();
 	RETCODE getDescriptorField(SQLSMALLINT iRecord, SQLSMALLINT iField, PTR rgbValue, SQLINTEGER cbValueMax, SQLINTEGER *pcbValue);
 	RETCODE setDescriptorField(SQLSMALLINT iRecord, SQLSMALLINT iField, PTR rgbValue, SQLINTEGER cbValueMax);
+	RETCODE getDiagField(SQLSMALLINT	iRecord, SQLSMALLINT	fDiagField, SQLPOINTER		rgbDiagInfo, SQLSMALLINT	cbDiagInfoMax, SQLSMALLINT   *pcbDiagInfo);
 	RETCODE freeStatement(SQLUSMALLINT option);
 	RETCODE execDirect(ustring sql);
 	RETCODE execute();

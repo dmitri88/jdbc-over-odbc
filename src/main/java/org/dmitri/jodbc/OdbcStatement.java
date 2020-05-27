@@ -10,6 +10,7 @@ import java.util.List;
 import org.dmitri.jodbc.dto.BoundParameter;
 import org.dmitri.jodbc.enums.OdbcBindType;
 import org.dmitri.jodbc.enums.OdbcColumnAttribute;
+import org.dmitri.jodbc.enums.OdbcDiagField;
 import org.dmitri.jodbc.enums.OdbcFreeStatement;
 import org.dmitri.jodbc.enums.OdbcStatementAttribute;
 import org.dmitri.jodbc.enums.OdbcStatus;
@@ -150,10 +151,18 @@ public class OdbcStatement {
 			size = result.getRow();
 			result.beforeFirst();
 		} catch (Exception ex) {
-			log.error("getRowCount error", ex);
+			//log.error("getRowCount error", ex);
 			throw new RuntimeException(ex);
 		}
 		return size;
+	}
+	
+	private long getRowCountCursor() {
+		try {
+			return getRowCount();
+		} catch (Exception e) {
+			return 0;
+		}
 	}
 
 	public Object[] describeColumn(int colNum) {
@@ -391,8 +400,10 @@ public class OdbcStatement {
 			log.error("moreResults: invalid statement");
 			return OdbcStatus.SQL_ERROR.getType();
 		}
-		if(statement.getMoreResults())
+		if(statement.getMoreResults()) {
+			result = statement.getResultSet();
 			return OdbcStatus.SQL_SUCCESS.getType();
+		}
 		return OdbcStatus.SQL_NO_DATA.getType();
 	}
 
@@ -429,6 +440,22 @@ public class OdbcStatement {
 		}
 		return ret;
 		
+	}
+
+	public Object getDiagField(int iRecord, int fDiagField) {
+		OdbcDiagField attr = OdbcDiagField.valueOf(fDiagField);
+		Object ret;
+		log.debug("JAVA getDiagField {} {} {}", statementId, attr != null ? attr : fDiagField, iRecord);
+		switch (attr) {
+		case SQL_DIAG_CURSOR_ROW_COUNT:
+			ret = Long.valueOf(getRowCountCursor());
+			break;
+		default:
+			log.warn("getDiagField NOT FOUND " + attr);
+			throw new RuntimeException("UNDEFINED statement attibute:" + attr);
+			//break;
+		}
+		return ret;
 	}
 
 
