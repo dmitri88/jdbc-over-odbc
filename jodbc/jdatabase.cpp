@@ -175,6 +175,9 @@ RETCODE JDatabase::getConnectionAttr(SQLINTEGER fAttribute, SQLPOINTER rgbValue,
 			jarrayToString(env, data, 0, rgbValue, cbValueMax,pcbValue);
 			break;
 
+		case 1217://SQL_CA_SS_VARIANT_SERVER_TYPE
+			jarrayToInt(env, data, 0,(jint*)pcbValue);
+			break;
 		case SQL_TXN_ISOLATION:
 			jarrayToInt(env, data, 0,(jint*)rgbValue);
 			if(pcbValue!=NULL)
@@ -214,6 +217,7 @@ RETCODE JDatabase::getInfo(SQLUSMALLINT fInfoType, PTR rgbInfoValue, SQLSMALLINT
 		case SQL_OWNER_TERM:
 		case SQL_IDENTIFIER_QUOTE_CHAR:
 		case SQL_CATALOG_NAME_SEPARATOR:
+		case SQL_DATABASE_NAME:
 			ret = jarrayToString(env, data, 0, rgbInfoValue, cbInfoValueMax,&retSize);
 			if(pcbInfoValue!=NULL)
 				*pcbInfoValue = retSize;

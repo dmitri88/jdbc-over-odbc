@@ -77,7 +77,7 @@ public class OdbcImpDescriptor {
 		return ret;
 	}
 	
-	private Long getColumnScale(int iRecord) {
+	public Long getColumnScale(int iRecord) {
 		try {
 			ResultSetMetaData rsmd = getMetaData();
 			return  Long.valueOf(rsmd.getScale(iRecord));
@@ -113,7 +113,8 @@ public class OdbcImpDescriptor {
 	public Long getColumnAttributeByLength(int colNum) {
 		try {
 			ResultSetMetaData rsmd = getMetaData();
-			return Long.valueOf(rsmd.getPrecision(colNum));
+			int length = rsmd.getPrecision(colNum);
+			return Long.valueOf(length<100000000?length:0);
 		} catch (SQLException e) {
 			log.error("getColumnAttributeByLength error", e);
 			throw new RuntimeException(e);

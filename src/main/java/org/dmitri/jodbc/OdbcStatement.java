@@ -174,7 +174,7 @@ public class OdbcStatement {
 			ret[1] = rsmd.getColumnLabel(colNum);
 			ret[2] = Integer.valueOf(rsmd.getColumnType(colNum));
 
-			ret[4] = Integer.valueOf(0); // decimalDigits
+			ret[4] = Integer.valueOf(getImpDescriptor().getColumnScale(colNum).intValue());
 			// ret[5] = Integer.valueOf(rsmd.isNullable(colNum));
 			ret[5] = rsmd.isNullable(colNum);
 			ret[3] = Integer.valueOf(getImpDescriptor().getColumnAttributeByLength(colNum).intValue());
@@ -217,6 +217,9 @@ public class OdbcStatement {
 		case SQL_COLUMN_OWNER_NAME:
 		case SQL_COLUMN_QUALIFIER_NAME:
 			ret = new Object[] {new String("")};
+			break;
+		case UNKNOWN_SHIT_1:
+			ret = new Object[] {Long.valueOf(0)};
 			break;
 		default:
 			log.warn("UNDEFINED column attibute:" + attr);
@@ -267,7 +270,7 @@ public class OdbcStatement {
 		case SQL_ATTR_APP_PARAM_DESC:
 		case SQL_ATTR_IMP_PARAM_DESC:
 		case SQL_ATTR_IMP_ROW_DESC:
-			return new Object[] { statementId };
+			return new Object[] { /*statementId*/0x100 };
 		default:
 			log.warn("UNDEFINED statement attibute:" + attr);
 			throw new RuntimeException("UNDEFINED statement attibute:" + attr);
@@ -295,6 +298,9 @@ public class OdbcStatement {
 			break;
 			
 		case SQL_RETRIEVE_DATA:
+			break;
+		case SQL_SOPT_SS_HIDDEN_COLUMNS:
+		case SQL_SOPT_SS_NOBROWSETABLE:
 			break;
 		default:
 			log.warn("setStatementAttribute NOT FOUND " + attr);

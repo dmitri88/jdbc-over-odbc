@@ -122,7 +122,9 @@ public class OdbcDatabase {
 		case SQL_TXN_ISOLATION:
 			ret[0] = connection.getTransactionIsolation();
 			break;
-
+		case SQL_CA_SS_VARIANT_SERVER_TYPE:
+			ret[0] = Long.valueOf(4);
+			break;		
 		default:
 			log.warn("UNDEFINED connection attibute:" + attr);
 			return new Object[0];
@@ -205,6 +207,9 @@ public class OdbcDatabase {
 			} catch (SQLException e) {
 				throw new RuntimeException(e);
 			}
+			break;
+		case SQL_DATABASE_NAME:
+				ret[0] = getCurrentCatalog();
 			break;
 		case SQL_DBMS_VER:
 			try {

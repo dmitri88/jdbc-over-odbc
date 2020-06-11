@@ -63,11 +63,40 @@ void test_attributes2(SQLHANDLE hDbc, SQLHANDLE hStmt){
 	ret = SQLGetConnectAttrW(hDbc, SQL_ATTR_CURRENT_CATALOG, data, 1024, &size);
 	assert(ret == 0);
 	assert(ustring((SQLWCHAR*)data).compare(ustring(L"DEV_EnterpriseArchitect"))==0);
+
+	ret = SQLGetConnectAttrW(hDbc, 1202, data, SQL_IS_UINTEGER,0);
+	assert(ret == 0);
+
+	ret = SQLGetConnectAttrW(hDbc, 1217, data, 4,&size);
+	assert(ret == 0);
+	assert(size == 4);
+
+
+	ret = SQLSetConnectAttrW(hDbc, SQL_ATTR_MAX_ROWS, NULL, -6);
+	assert(ret == 0);
+
+	ret = SQLSetConnectAttrW(hDbc, SQL_ATTR_QUERY_TIMEOUT, NULL, -6);
+	assert(ret == 0);
+
+	ret = SQLSetConnectAttrW(hDbc, SQL_ROWSET_SIZE, (PTR)1, -6);
+	assert(ret == 0);
+
+	ret = SQLSetConnectAttrW(hDbc, SQL_ATTR_ROW_ARRAY_SIZE, (PTR)1, -6);
+	assert(ret == 0);
+
+	ret = SQLGetConnectAttrW(hDbc, SQL_ATTR_TXN_ISOLATION, data, 4,0);
+	assert(ret == 0);
+	assert(*((short*)data)==2);//SQL_TXN_READ_COMMITTED>
+
+	ret = SQLParamOptions(hStmt, 1, NULL);
+	assert(ret == 0);
+
 }
 
 SQLHANDLE create_database(){
 	SQLHANDLE hEnv;
 	SQLHANDLE hDbc;
+	HSTMT  hstmt;
 	int ret;
 
 	SQLWCHAR data[200];
@@ -110,7 +139,93 @@ SQLHANDLE create_database(){
 	short unsigned int *enabledFuncs = (short unsigned int*) malloc(
 			sizeof(UWORD) * SQL_API_ODBC3_ALL_FUNCTIONS_SIZE);
 	ret = SQLGetFunctions(hDbc, 999, enabledFuncs);
-	printf("SQLGetFunctions result %d\n", ret);
+	printf("SQLGetFunctions result %d %d \n", ret,enabledFuncs);
+	//assert(enabledFuncs == 0);
+	/*
+	Out:			Function                                                    SQL_FUNC_EXISTS(SupportedPtr,API Constant)
+								SQL_API_SQLALLOCCONNECT = 1                                 SQL_TRUE
+								SQL_API_SQLALLOCENV = 2                                     SQL_TRUE
+								SQL_API_SQLALLOCSTMT = 3                                    SQL_TRUE
+								SQL_API_SQLBINDCOL = 4                                      SQL_TRUE
+								SQL_API_SQLCANCEL = 5                                       SQL_TRUE
+								SQL_API_SQLCOLATTRIBUTES = 6                                SQL_TRUE
+								SQL_API_SQLCONNECT = 7                                      SQL_TRUE
+								SQL_API_SQLDESCRIBECOL = 8                                  SQL_TRUE
+								SQL_API_SQLDISCONNECT = 9                                   SQL_TRUE
+								SQL_API_SQLERROR = 10                                       SQL_TRUE
+								SQL_API_SQLEXECDIRECT = 11                                  SQL_TRUE
+								SQL_API_SQLEXECUTE = 12                                     SQL_TRUE
+								SQL_API_SQLFETCH = 13                                       SQL_TRUE
+								SQL_API_SQLFREECONNECT = 14                                 SQL_TRUE
+								SQL_API_SQLFREEENV = 15                                     SQL_TRUE
+								SQL_API_SQLFREESTMT = 16                                    SQL_TRUE
+								SQL_API_SQLGETCURSORNAME = 17                               SQL_TRUE
+								SQL_API_SQLNUMRESULTCOLS = 18                               SQL_TRUE
+								SQL_API_SQLPREPARE = 19                                     SQL_TRUE
+								SQL_API_SQLROWCOUNT = 20                                    SQL_TRUE
+								SQL_API_SQLSETCURSORNAME = 21                               SQL_TRUE
+								SQL_API_SQLSETPARAM = 22                                    SQL_TRUE
+								SQL_API_SQLTRANSACT = 23                                    SQL_TRUE
+								SQL_API_SQLBULKOPERATIONS = 24                              SQL_TRUE
+								SQL_API_SQLCOLUMNS = 40                                     SQL_TRUE
+								SQL_API_SQLDRIVERCONNECT = 41                               SQL_TRUE
+								SQL_API_SQLGETCONNECTOPTION = 42                            SQL_TRUE
+								SQL_API_SQLGETDATA = 43                                     SQL_TRUE
+								SQL_API_SQLGETFUNCTIONS = 44                                SQL_TRUE
+								SQL_API_SQLGETINFO = 45                                     SQL_TRUE
+								SQL_API_SQLGETSTMTOPTION = 46                               SQL_TRUE
+								SQL_API_SQLGETTYPEINFO = 47                                 SQL_TRUE
+								SQL_API_SQLPARAMDATA = 48                                   SQL_TRUE
+								SQL_API_SQLPUTDATA = 49                                     SQL_TRUE
+								SQL_API_SQLSETCONNECTOPTION = 50                            SQL_TRUE
+								SQL_API_SQLSETSTMTOPTION = 51                               SQL_TRUE
+								SQL_API_SQLSPECIALCOLUMNS = 52                              SQL_TRUE
+								SQL_API_SQLSTATISTICS = 53                                  SQL_TRUE
+								SQL_API_SQLTABLES = 54                                      SQL_TRUE
+								SQL_API_SQLBROWSECONNECT = 55                               SQL_TRUE
+								SQL_API_SQLCOLUMNPRIVILEGES = 56                            SQL_TRUE
+								SQL_API_SQLDATASOURCES = 57                                 SQL_TRUE
+								SQL_API_SQLDESCRIBEPARAM = 58                               SQL_TRUE
+								SQL_API_SQLEXTENDEDFETCH = 59                               SQL_TRUE
+								SQL_API_SQLFOREIGNKEYS = 60                                 SQL_TRUE
+								SQL_API_SQLMORERESULTS = 61                                 SQL_TRUE
+								SQL_API_SQLNATIVESQL = 62                                   SQL_TRUE
+								SQL_API_SQLNUMPARAMS = 63                                   SQL_TRUE
+								SQL_API_SQLPARAMOPTIONS = 64                                SQL_TRUE
+								SQL_API_SQLPRIMARYKEYS = 65                                 SQL_TRUE
+								SQL_API_SQLPROCEDURECOLUMNS = 66                            SQL_TRUE
+								SQL_API_SQLPROCEDURES = 67                                  SQL_TRUE
+								SQL_API_SQLSETPOS = 68                                      SQL_TRUE
+								SQL_API_SQLSETSCROLLOPTIONS = 69                            SQL_TRUE
+								SQL_API_SQLTABLEPRIVILEGES = 70                             SQL_TRUE
+								SQL_API_SQLDRIVERS = 71                                     SQL_TRUE
+								SQL_API_SQLBINDPARAMETER = 72                               SQL_TRUE
+								SQL_API_SQLALLOCHANDLE = 1001                               SQL_TRUE
+								SQL_API_SQLBINDPARAM = 1002                                 SQL_TRUE
+								SQL_API_SQLCLOSECURSOR = 1003                               SQL_TRUE
+								SQL_API_SQLCOLATTRIBUTE = 6                                 SQL_TRUE
+								SQL_API_SQLCOPYDESC = 1004                                  SQL_TRUE
+								SQL_API_SQLENDTRAN = 1005                                   SQL_TRUE
+								SQL_API_SQLFETCHSCROLL = 1021                               SQL_TRUE
+								SQL_API_SQLFREEHANDLE = 1006                                SQL_TRUE
+								SQL_API_SQLGETCONNECTATTR = 1007                            SQL_TRUE
+								SQL_API_SQLGETDESCFIELD = 1008                              SQL_TRUE
+								SQL_API_SQLGETDESCREC = 1009                                SQL_TRUE
+								SQL_API_SQLGETDIAGFIELD = 1010                              SQL_TRUE
+								SQL_API_SQLGETDIAGREC = 1011                                SQL_TRUE
+								SQL_API_SQLGETENVATTR = 1012                                SQL_TRUE
+								SQL_API_SQLGETSTMTATTR = 1014                               SQL_TRUE
+								SQL_API_SQLSETCONNECTATTR = 1016                            SQL_TRUE
+								SQL_API_SQLSETDESCFIELD = 1017                              SQL_TRUE
+								SQL_API_SQLSETDESCREC = 1018                                SQL_TRUE
+								SQL_API_SQLSETENVATTR = 1019                                SQL_TRUE
+								SQL_API_SQLSETSTMTATTR = 1020                               SQL_TRUE
+
+
+	*/
+
+
+
 
 	ustring dsn = ustring(L"Simba");
 	ret = SQLConnectW(hDbc,(SQLWCHAR*)dsn.c_str(),dsn.size(),NULL,0,NULL,0);
@@ -248,6 +363,17 @@ SQLHANDLE create_database(){
 	assert(*((int*)data)==0x00001F81);
 	assert(retLen==4);
 
+	ret = SQLGetInfoW(hDbc, SQL_NEED_LONG_DATA_LEN, &data, 255, &retLen);
+	assert(ret == 0);
+	assert(ustring(data).compare(ustring(L"Y"))==0);
+
+	ret = SQLGetInfoW(hDbc, SQL_DATABASE_NAME, NULL, 0, &retLen);
+	assert(ret == 0);
+	assert(retLen==46);
+
+
+
+
 	ret = SQLGetInfoW(hDbc, SQL_CURSOR_COMMIT_BEHAVIOR, &data, 255, &retLen);
 	assert(ret == 0);
 	assert(*((int*)data)==1);
@@ -263,7 +389,7 @@ SQLHANDLE create_database(){
 	assert(*((int*)data)==2);
 	assert(retLen==4);
 
-	ret = SQLGetInfoW(hDbc, SQL_MAX_CATALOG_NAME_LEN, &data, 2, NULL);
+	ret = SQLGetInfoW(hDbc, SQL_MAX_CATALOG_NAME_LEN, &data, 4, NULL);
 	assert(ret == 0);
 	assert(*((short*)data)==128);
 	//assert(retLen==2);
@@ -319,9 +445,11 @@ void test_queries(SQLHANDLE hDbc){
 	char data[1024];
 	char retdata[1024];
 
-	ret = SQLAllocHandle( SQL_HANDLE_STMT, hDbc, &hStmt);
+	ret = SQLAllocStmt(hDbc, &hStmt);
 	assert(ret == 0);
 
+	ret = SQLAllocHandle( SQL_HANDLE_STMT, hDbc, &hStmt);
+	assert(ret == 0);
 
 	ret = SQLNativeSqlW(hDbc, (SQLWCHAR *)ustring(L"SELECT COUNT(*) AS RecordCount FROM t_package").c_str(),SQL_VARBINARY, NULL, 0, &retCount);
 	assert(ret == 0);
@@ -395,6 +523,15 @@ void test_imp(SQLHANDLE hDbc){
 
 	ret = SQLExecDirectW(hStmt, (SQLWCHAR*)ustring(L"select * from t_package").c_str(), -1);
 	assert(ret == 0);
+
+	/* get the ird descriptors */
+	ret = SQLGetStmtAttrW(hStmt, SQL_ATTR_APP_PARAM_DESC, &ird, 0, NULL);
+	assert(ret == 0);
+	assert(ird == hStmt);
+
+	ret = SQLGetStmtAttrW(hStmt, SQL_ATTR_IMP_PARAM_DESC, &ird, 0, NULL);
+	assert(ret == 0);
+	assert(ird == hStmt);
 
 	/* get the ird descriptors */
 	ret = SQLGetStmtAttrW(hStmt, SQL_ATTR_IMP_ROW_DESC, &ird, SQL_IS_POINTER, NULL);
@@ -473,7 +610,7 @@ void test_attributes_3(SQLHANDLE hStmt){
 	ret = SQLDescribeColW(hStmt, 1, colName, 1024, &nameLength, &dataType, &colSize, &decimalDigits, &nullable);
 	assert(ret == 0);
 	assert(nameLength == 10);
-	assert(dataType == 4);
+	assert(dataType == SQL_INTEGER);
 	assert(colSize == 10);
 	assert(decimalDigits == 0);
 	assert(nullable == 0);
@@ -481,9 +618,31 @@ void test_attributes_3(SQLHANDLE hStmt){
 	ret = SQLDescribeColW(hStmt, 2, colName, 1024, &nameLength, &dataType, &colSize, &decimalDigits, &nullable);
 	assert(ret == 0);
 	assert(nameLength == 4);
-	assert(dataType == -9);
+	assert(dataType == SQL_WVARCHAR);
 	assert(colSize == 255);
 	assert(decimalDigits == 0);
+	assert(nullable == 1);
+
+	ret = SQLDescribeColW(hStmt, 6, NULL, 0, NULL, &dataType, &colSize, &decimalDigits, &nullable);
+	assert(ret == 0);
+	assert(dataType == SQL_WVARCHAR);
+	printf("asdfafafasff %d\n",colSize);
+	assert(colSize == 0);
+	assert(decimalDigits == 0);
+	assert(nullable == 1);
+
+	ret = SQLDescribeColW(hStmt, 9, NULL, 0, NULL, &dataType, &colSize, &decimalDigits, &nullable);
+	assert(ret == 0);
+	assert(dataType == SQL_INTEGER);
+	assert(colSize == 10);
+	assert(decimalDigits == 0);
+	assert(nullable == 0);
+
+	ret = SQLDescribeColW(hStmt, 11, NULL, 0, NULL, &dataType, &colSize, &decimalDigits, &nullable);
+	assert(ret == 0);
+	assert(dataType == SQL_TYPE_TIMESTAMP);//SQL_TIMESTAMP
+	assert(colSize == 23);
+	assert(decimalDigits == 3);
 	assert(nullable == 1);
 
 
@@ -525,6 +684,14 @@ void test_attributes(SQLHANDLE hStmt){
 	SQLULEN colSize;
 	SQLSMALLINT decimalDigits;
 	SQLSMALLINT nullable;
+
+	ret = SQLDescribeColW(hStmt, 1, NULL, 1024, &nameLength, &dataType, &colSize, &decimalDigits, &nullable);
+	assert(ret == 0);
+	assert(dataType == 4);
+	assert(colSize == 10);
+	assert(decimalDigits == 0);
+	assert(nullable == 1);
+
 	ret = SQLDescribeColW(hStmt, 1, colName, 1024, &nameLength, &dataType, &colSize, &decimalDigits, &nullable);
 	assert(ret == 0);
 	assert(nameLength == 11);
@@ -569,10 +736,14 @@ void test_attributes(SQLHANDLE hStmt){
 	assert(bufLength == 4);
 	assert(numberValue == 0);
 
-	ret = SQLColAttributeW(hStmt, 1, SQL_DESC_BASE_COLUMN_NAME, data, 1024, &bufLength, &numberValue);
+	ret = SQLColAttributeW(hStmt, 1, SQL_DESC_BASE_COLUMN_NAME, data, 258, &bufLength, &numberValue);
 	assert(ret == 0);
 	assert(bufLength == 0);
 	assert(numberValue == 0);
+
+	ret = SQLColAttributeW(hStmt, 1, SQL_DESC_BASE_COLUMN_NAME, data, 258, &bufLength, NULL);
+	assert(ret == 0);
+	assert(bufLength == 0);
 
 	ret = SQLColAttributeW(hStmt, 1, SQL_DESC_BASE_TABLE_NAME, data, 1024, &bufLength, &numberValue);
 	assert(ret == 0);
@@ -590,9 +761,10 @@ void test_attributes(SQLHANDLE hStmt){
 	assert(numberValue == 0);
 
 	ret = SQLColAttributeW(hStmt, 1, 1212, data, 1024, &bufLength, &numberValue);
-	assert(ret == -1);
+	//assert(ret == -1);
+	assert(ret == 0);
 	//assert(bufLength == 0);
-	//assert(numberValue == 0);
+	assert(numberValue == 0);
 
 	ret = SQLColAttributeW(hStmt, 1, SQL_COLUMN_TABLE_NAME, data, 1024, &bufLength, &numberValue);
 	assert(ret == 0);
@@ -613,6 +785,9 @@ void test_attributes(SQLHANDLE hStmt){
 	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_PARAM_BIND_TYPE, (PTR)10, 0);
 	assert(ret == 0);
 
+	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_PARAM_BIND_TYPE, (PTR)0, 0);
+	assert(ret == 0);
+
 	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_ROW_ARRAY_SIZE, (PTR)0x1, SQL_IS_INTEGER);
 	assert(ret == 0);
 
@@ -622,7 +797,24 @@ void test_attributes(SQLHANDLE hStmt){
 	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_PARAM_BIND_OFFSET_PTR, data, 0);
 	assert(ret == 0);
 
+	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_PARAM_BIND_OFFSET_PTR, NULL, 0);
+	assert(ret == 0);
+
+	ret = SQLSetStmtAttrW(hStmt, SQL_SOPT_SS_HIDDEN_COLUMNS, NULL, SQL_IS_INTEGER);
+	assert(ret == 0);
+
+	ret = SQLSetStmtAttrW(hStmt, SQL_SOPT_SS_NOBROWSETABLE, NULL, SQL_IS_INTEGER);
+	assert(ret == 0);
+
+
+	//ustring sql = ustring(L"SELECT COUNT(*) AS RecordCount FROM t_package");
+	//ret = SQLExecDirectW(hStmt, (SQLWCHAR*)sql.c_str(),sql.size());
+	//assert(ret == 0);
+
 	ret = SQLSetDescFieldW(hStmt, 1,SQL_DESC_OCTET_LENGTH_PTR, &numberValue, 0);
+	assert(ret == 0);
+
+	ret = SQLSetDescFieldW(hStmt, 1,SQL_DESC_OCTET_LENGTH_PTR, NULL, 0);
 	assert(ret == 0);
 
 
@@ -637,7 +829,6 @@ void test_attributes(SQLHANDLE hStmt){
 	assert(ret == 0);
 	assert(numberValue == 0);
 	assert((*(SQLINTEGER*)data) == 1);
-
 
 
 

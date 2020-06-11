@@ -156,6 +156,7 @@ RETCODE JStatement::describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSM
 		}
 		if(colName != NULL) {
 			jstring jcolName=(jstring) env->GetObjectArrayElement(data, 0);
+			printf("asdasdasd %p\n",jcolName);
 			ustring colName2 = ustring(from_jstring(env,jcolName));
 			SQLSMALLINT len1  = ((colName2.size()+1)*sizeof(SQLWCHAR));
 			if(bufLength<len1){
@@ -168,7 +169,8 @@ RETCODE JStatement::describeColumn(SQLUSMALLINT colnum, SQLWCHAR *colName, SQLSM
 				ret = strcpy(colName,bufLength,colName2);
 			}
 		} else {
-			*nameLength = 0;
+			if(nameLength)
+				*nameLength = 0;
 		}
 		if(dataType != NULL) {
 			val = env->GetObjectArrayElement(data, 2);
@@ -274,6 +276,14 @@ RETCODE JStatement::getStatementAttr(SQLINTEGER	fAttribute, PTR		rgbValue, SQLIN
 			ret = jarrayToLong(env,data,0,NULL, (SQLPOINTER)rgbValue,cbValueMax,&retType);
 			if(stringLength)
 				*stringLength = 0;
+			break;
+		case SQL_ATTR_IMP_PARAM_DESC:
+		case SQL_ATTR_APP_PARAM_DESC:
+		case SQL_ATTR_APP_ROW_DESC:
+			ret = jarrayToLong(env,data,0,NULL, (SQLPOINTER)rgbValue,4,NULL);
+			if(stringLength)
+				*stringLength = 0;
+			*(JStatement**)rgbValue = statement;
 			break;
 		case SQL_ATTR_IMP_ROW_DESC:
 			ret = jarrayToLong(env,data,0,NULL, (SQLPOINTER)rgbValue,cbValueMax,&retType);

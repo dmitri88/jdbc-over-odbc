@@ -11,6 +11,7 @@ public enum OdbcInfoType {
 	SQL_FETCH_DIRECTION                 (8),
 	SQL_SERVER_NAME                    (13),
 	SQL_SEARCH_PATTERN_ESCAPE          (14),
+	SQL_DATABASE_NAME					(16),
 	SQL_DBMS_NAME                      (17),
 	SQL_DBMS_VER                       (18),
 	SQL_ACCESSIBLE_TABLES              (19),

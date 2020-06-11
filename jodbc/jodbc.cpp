@@ -64,7 +64,7 @@ RETCODE SQL_API SQLAllocHandle(SQLSMALLINT handleType, SQLHANDLE parentHandle, S
 
 RETCODE SQL_API SQLAllocStmt(HDBC hdbc, HSTMT * hstmt){
 	LOG(5, "Entering SQLAllocStmt (%p,%p)\n",hdbc,hstmt);
-	return SQL_ERROR;
+	return SQLAllocHandle(SQL_HANDLE_STMT, hdbc, hstmt);
 }
 
 RETCODE SQL_API SQLColAttributeW(HSTMT hstmt,SQLUSMALLINT icol, SQLUSMALLINT fDescType, SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT  *pcbDesc, SQLLEN *pfDesc){
@@ -119,7 +119,7 @@ RETCODE SQL_API SQLDescribeColW(HSTMT hstm, SQLUSMALLINT colnum, SQLWCHAR *colNa
 
 	ret = stmt->describeColumn(colnum, colName, bufLength, nameLength, dataType, colSize, decimalDigits , nullable);
 
-	LOG(5, "Exiting SQLDescribeColW %d (%p,%d,%d,%s,%d,%d,%lu,%d,%d)\n",ret,hstm,colnum,bufLength,unicode_to_utf8(colName),*nameLength,*dataType,*colSize,*decimalDigits,*nullable);
+	LOG(5, "Exiting SQLDescribeColW %d (%p,%d,%d,%s,%d,%d,%lu,%d,%d)\n",ret,hstm,colnum,bufLength,unicode_to_utf8(colName),POINTER_VAL(nameLength),*dataType,*colSize,*decimalDigits,*nullable);
 	return ret;
 }
 
@@ -203,9 +203,9 @@ RETCODE SQL_API SQLGetFunctions(HDBC ConnectionHandle, SQLUSMALLINT FunctionId, 
 	memset(pfExists, 0, sizeof(UWORD) * SQL_API_ODBC3_ALL_FUNCTIONS_SIZE);
 
 
-	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLALLOCCONNECT); 1 deprecated */
-	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLALLOCENV); 2 deprecated */
-	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLALLOCSTMT); 3 deprecated */
+	 //SQL_FUNC_ESET(pfExists, SQL_API_SQLALLOCCONNECT); //1 //deprecated */
+	 //SQL_FUNC_ESET(pfExists, SQL_API_SQLALLOCENV); //2 deprecated */
+	 //SQL_FUNC_ESET(pfExists, SQL_API_SQLALLOCSTMT); //3 deprecated */
 
 	/*
 	 * for (i = SQL_API_SQLBINDCOL; i <= 23; i++) SQL_FUNC_ESET(pfExists,
@@ -217,38 +217,39 @@ RETCODE SQL_API SQLGetFunctions(HDBC ConnectionHandle, SQLUSMALLINT FunctionId, 
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLCONNECT);		/* 7 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLDESCRIBECOL);	/* 8 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLDISCONNECT);		/* 9 */
-	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLERROR);  10 deprecated */
+	SQL_FUNC_ESET(pfExists, SQL_API_SQLERROR);  //10 deprecated */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLEXECDIRECT);		/* 11 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLEXECUTE);		/* 12 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLFETCH);	/* 13 */
-	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLFREECONNECT); 14 deprecated */
-	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLFREEENV); 15 deprecated */
+	 SQL_FUNC_ESET(pfExists, SQL_API_SQLFREECONNECT); //14 deprecated */
+	 SQL_FUNC_ESET(pfExists, SQL_API_SQLFREEENV); //15 deprecated */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLFREESTMT);		/* 16 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLGETCURSORNAME);	/* 17 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLNUMRESULTCOLS);	/* 18 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLPREPARE);		/* 19 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLROWCOUNT);		/* 20 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLSETCURSORNAME);	/* 21 */
-	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLSETPARAM); 22 deprecated */
-	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLTRANSACT); 23 deprecated */
-
+	 SQL_FUNC_ESET(pfExists, SQL_API_SQLSETPARAM); //22 deprecated */
+	 SQL_FUNC_ESET(pfExists, SQL_API_SQLTRANSACT);// 23 deprecated */
+		//if (0 != (ALLOW_BULK_OPERATIONS & ci->updatable_cursors))
+		SQL_FUNC_ESET(pfExists, SQL_API_SQLBULKOPERATIONS);	/* 24 */
 	/*
 	 * for (i = 40; i < SQL_API_SQLEXTENDEDFETCH; i++)
 	 * SQL_FUNC_ESET(pfExists, i);
 	 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLCOLUMNS);		/* 40 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLDRIVERCONNECT);	/* 41 */
-	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLGETCONNECTOPTION); 42 deprecated */
+	SQL_FUNC_ESET(pfExists, SQL_API_SQLGETCONNECTOPTION);// 42 deprecated */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLGETDATA);		/* 43 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLGETFUNCTIONS);	/* 44 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLGETINFO);		/* 45 */
-	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLGETSTMTOPTION); 46 deprecated */
+	SQL_FUNC_ESET(pfExists, SQL_API_SQLGETSTMTOPTION); //46 deprecated */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLGETTYPEINFO);	/* 47 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLPARAMDATA);		/* 48 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLPUTDATA);		/* 49 */
 
-	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLSETCONNECTIONOPTION); 50 deprecated */
-	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLSETSTMTOPTION); 51 deprecated */
+	SQL_FUNC_ESET(pfExists, /*SQL_API_SQLSETCONNECTIONOPTION*/50); //50 deprecated */
+	SQL_FUNC_ESET(pfExists, SQL_API_SQLSETSTMTOPTION); //51 deprecated */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLSPECIALCOLUMNS);	/* 52 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLSTATISTICS);		/* 53 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLTABLES);		/* 54 */
@@ -269,14 +270,14 @@ RETCODE SQL_API SQLGetFunctions(HDBC ConnectionHandle, SQLUSMALLINT FunctionId, 
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLMORERESULTS);	/* 61 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLNATIVESQL);		/* 62 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLNUMPARAMS);		/* 63 */
-	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLPARAMOPTIONS); 64 deprecated */
+	SQL_FUNC_ESET(pfExists, SQL_API_SQLPARAMOPTIONS);// 64 deprecated */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLPRIMARYKEYS);	/* 65 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLPROCEDURECOLUMNS);	/* 66 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLPROCEDURES);		/* 67 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLSETPOS);		/* 68 */
-	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLSETSCROLLOPTIONS); 69 deprecated */
+	SQL_FUNC_ESET(pfExists, SQL_API_SQLSETSCROLLOPTIONS); //69 deprecated */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLTABLEPRIVILEGES);	/* 70 */
-	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLDRIVERS); */	/* 71 */
+	SQL_FUNC_ESET(pfExists, SQL_API_SQLDRIVERS); //????	/* 71 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLBINDPARAMETER);	/* 72 */
 
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLALLOCHANDLE);	/* 1001 */
@@ -303,9 +304,8 @@ RETCODE SQL_API SQLGetFunctions(HDBC ConnectionHandle, SQLUSMALLINT FunctionId, 
 	}
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLSETENVATTR);		/* 1019 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLSETSTMTATTR);	/* 1020 */
-	//SQL_FUNC_ESET(pfExists, SQL_API_SQLFETCHSCROLL);	/* 1021 */
-	//if (0 != (ALLOW_BULK_OPERATIONS & ci->updatable_cursors))
-	SQL_FUNC_ESET(pfExists, SQL_API_SQLBULKOPERATIONS);	/* 24 */
+	SQL_FUNC_ESET(pfExists, SQL_API_SQLFETCHSCROLL);	/* 1021 */
+
 
 
 	LOG(5, "Exiting GetFunctions 0 (%p,%hi)\n",ConnectionHandle,FunctionId);
@@ -681,6 +681,19 @@ RETCODE SQL_API SQLFetch(HSTMT hstmt) {
 	LOG(5, "Exiting SQLFetch %d (%p)\n",ret,hstmt);
 	return ret;
 }
+RETCODE SQL_API SQLFetchScroll(HSTMT hstm, SQLSMALLINT fetchOrientation, SQLLEN fetchOffset){
+	RETCODE	ret;
+
+	LOG(5, "Entering SQLFetchScroll (%p)\n",hstm);
+	if(!hstm)
+		return SQL_INVALID_HANDLE;
+	JStatement* stmt = (JStatement*)hstm;
+
+	//ret = stmt->fetch();
+	ret= SQL_ERROR;
+	LOG(5, "Exiting SQLFetchScroll %d (%p)\n",ret,hstm);
+	return ret;
+}
 
 RETCODE SQL_API SQLMoreResults(HSTMT hstmt){
 	RETCODE	ret;
@@ -735,4 +748,10 @@ RETCODE SQL_API SQLGetData(HSTMT hstm, SQLUSMALLINT column, SQLSMALLINT targetTy
 
 	LOG(5, "Exiting SQLGetData %d (%p,%d,%d)\n",ret,hstm,column,targetType);
 	return ret;
+}
+RETCODE SQL_API SQLParamOptions(HSTMT hstmt, SQLULEN crow, SQLULEN *pirow) {
+	RETCODE	ret;
+
+	LOG(5, "Entering SQLParamOptions (%p,%li,%p)\n",hstmt,crow,pirow);
+	return SQL_SUCCESS;
 }

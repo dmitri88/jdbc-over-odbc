@@ -6,6 +6,9 @@
 #include <sqlspi.h>
 #include <stdarg.h>
 
+#define SQL_SOPT_SS_HIDDEN_COLUMNS 1227
+#define SQL_SOPT_SS_NOBROWSETABLE 1228
+
 #define POINTER_VAL(p) (p!=NULL?(int(*p)):NULL)
 
 extern "C" RETCODE SQL_API SQLAllocHandle(SQLSMALLINT HandleType, SQLHANDLE InputHandle, SQLHANDLE * OutputHandle);
@@ -20,6 +23,7 @@ extern "C" RETCODE SQL_API SQLDriverConnectW(HDBC hdbc, HWND hwnd, SQLWCHAR *szC
 extern "C" RETCODE SQL_API SQLExecDirectW(HSTMT hstm, SQLWCHAR * sql, SQLINTEGER length);
 extern "C" RETCODE SQL_API SQLExecute(SQLHSTMT hstm);
 extern "C" RETCODE SQL_API SQLFetch(HSTMT hstm);
+extern "C" RETCODE SQL_API SQLFetchScroll(HSTMT hstm, SQLSMALLINT fetchOrientation, SQLLEN fetchOffset);
 extern "C" RETCODE SQL_API SQLFreeHandle(SQLSMALLINT HandleType, SQLHANDLE Handle);
 extern "C" RETCODE SQL_API SQLFreeStmt(HSTMT hstm, SQLUSMALLINT Option);
 extern "C" RETCODE SQL_API SQLGetConnectAttrW(SQLHDBC hdbc, SQLINTEGER fAttribute, SQLPOINTER rgbValue, SQLINTEGER cbValueMax, SQLINTEGER *pcbValue);
@@ -34,6 +38,7 @@ extern "C" RETCODE SQL_API SQLGetTypeInfoW(HSTMT	hstm, SQLSMALLINT	DataType);
 extern "C" RETCODE SQL_API SQLMoreResults(HSTMT hstmt);
 extern "C" RETCODE SQL_API SQLNativeSqlW(HDBC hdbc,SQLWCHAR *szSqlStrIn,SQLINTEGER	cbSqlStrIn,SQLWCHAR *szSqlStr,SQLINTEGER	cbSqlStrMax,SQLINTEGER   *pcbSqlStr);
 extern "C" RETCODE SQL_API SQLNumResultCols(HSTMT hstm, SQLSMALLINT * retCount);
+extern "C" RETCODE SQL_API SQLParamOptions(HSTMT hstmt, SQLULEN crow, SQLULEN *pirow);
 extern "C" RETCODE SQL_API SQLPrepareW(SQLHSTMT hstm, SQLWCHAR *text, SQLINTEGER length);
 extern "C" RETCODE SQL_API SQLRowCount(HSTMT hstm, SQLLEN * retCount);
 extern "C" RETCODE SQL_API SQLSetConnectAttrW(HDBC hdbc, SQLINTEGER	fAttribute, PTR		rgbValue, SQLINTEGER	cbValue);
