@@ -657,7 +657,6 @@ RETCODE SQL_API SQLNativeSqlW(HDBC hdbc,SQLWCHAR *szSqlStrIn,SQLINTEGER	cbSqlStr
 
 RETCODE	SQL_API SQLBindCol(HSTMT hstmt, SQLUSMALLINT column, SQLSMALLINT type, PTR value, SQLINTEGER bufLength, SQLINTEGER * strLengthOrIndex){
 	RETCODE	ret;
-
 	LOG(5, "Entering SQLBindCol (%d,%d,%p,%li,%p,%d)\n",column,type,value,bufLength,strLengthOrIndex,POINTER_VAL(strLengthOrIndex));
 	if(!hstmt)
 		return SQL_INVALID_HANDLE;
@@ -668,6 +667,12 @@ RETCODE	SQL_API SQLBindCol(HSTMT hstmt, SQLUSMALLINT column, SQLSMALLINT type, P
 	LOG(5, "Exiting SQLBindCol %d (%d,%d,%p,%li,%d)\n",ret,column,type,value,bufLength,POINTER_VAL(strLengthOrIndex));
 	return ret;
 }
+
+RETCODE SQL_API SQLExtendedFetch(SQLHSTMT hstmt, SQLUSMALLINT fFetchType, SQLLEN irow, SQLULEN *pcrow, SQLUSMALLINT *rgfRowStatus){
+	LOG(5, "Entering SQLExtendedFetch (%p)\n",hstmt);
+	return SQL_ERROR;
+}
+
 RETCODE SQL_API SQLFetch(HSTMT hstmt) {
 	RETCODE	ret;
 

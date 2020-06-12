@@ -253,12 +253,20 @@ SQLHANDLE create_database(){
 	assert(ret == 0);
 	assert(retLen == 40);
 
-	ret = SQLGetInfoW(hDbc, SQL_DBMS_NAME, &data, 255, &retLen);
+	ret = SQLGetInfoW(hDbc, SQL_DBMS_NAME, &data, 42, &retLen);
+	assert(ret == 0);
+	assert(ustring(data).compare(ustring(L"Microsoft SQL Server"))==0);
+
+	ret = SQLGetInfoW(hDbc, SQL_DBMS_NAME, &data, 42, NULL);
 	assert(ret == 0);
 	assert(ustring(data).compare(ustring(L"Microsoft SQL Server"))==0);
 	//assert(retLen == 0);
 
-	ret = SQLGetInfoW(hDbc, SQL_DBMS_VER, &data, 255, &retLen);
+	ret = SQLGetInfoW(hDbc, SQL_DBMS_VER, NULL, 0, &retLen);
+	assert(ret == 0);
+	assert(retLen == 20);
+
+	ret = SQLGetInfoW(hDbc, SQL_DBMS_VER, &data, 22, &retLen);
 	assert(ret == 0);
 	assert(ustring(data).compare(ustring(L"14.00.3238"))==0);
 
@@ -266,9 +274,14 @@ SQLHANDLE create_database(){
 	assert(ret == 0);
 	assert(ustring(data).compare(ustring(L"msodbcsql17.dl"))==0);
 
-	ret = SQLGetInfoW(hDbc, SQL_OWNER_TERM, &data, 255, &retLen);
+	ret = SQLGetInfoW(hDbc, SQL_OWNER_TERM, &data, 12, &retLen);
 	assert(ret == 0);
 	assert(ustring(data).compare(ustring(L"owner"))==0);
+
+	ret = SQLGetInfoW(hDbc, SQL_OWNER_TERM, NULL, 0, &retLen);
+	assert(ret == 0);
+	assert(retLen == 10);
+	//assert(ustring(data).compare(ustring(L"owner"))==0);
 
 	ret = SQLGetInfoW(hDbc, SQL_NEED_LONG_DATA_LEN, &data, 255, &retLen);
 	assert(ret == 0);
@@ -278,7 +291,15 @@ SQLHANDLE create_database(){
 	assert(ret == 0);
 	assert(ustring(data).compare(ustring(L"Y"))==0);
 
-	ret = SQLGetInfoW(hDbc, SQL_IDENTIFIER_QUOTE_CHAR, &data, 255, &retLen);
+	ret = SQLGetInfoW(hDbc, SQL_MULT_RESULT_SETS, &data,4, NULL);
+	assert(ret == 0);
+	assert(ustring(data).compare(ustring(L"Y"))==0);
+
+	ret = SQLGetInfoW(hDbc, SQL_IDENTIFIER_QUOTE_CHAR, NULL, 255, &retLen);
+	assert(ret == 0);
+	assert(retLen == 2);
+
+	ret = SQLGetInfoW(hDbc, SQL_IDENTIFIER_QUOTE_CHAR, &data, 4, &retLen);
 	assert(ret == 0);
 	assert(ustring(data).compare(ustring(L"\""))==0);
 
@@ -441,11 +462,13 @@ void test_queries(SQLHANDLE hDbc){
 	SQLINTEGER valInt;
 	SQLINTEGER retCount;
 	SQLHANDLE hStmt;
+	SQLHANDLE hStmt2;
 	SQLSMALLINT smallInt;
 	char data[1024];
+	char data2[1024];
 	char retdata[1024];
 
-	ret = SQLAllocStmt(hDbc, &hStmt);
+	ret = SQLAllocStmt(hDbc, &hStmt2);
 	assert(ret == 0);
 
 	ret = SQLAllocHandle( SQL_HANDLE_STMT, hDbc, &hStmt);
@@ -467,19 +490,56 @@ void test_queries(SQLHANDLE hDbc){
 	ret = SQLExecute(hStmt);
 	assert(ret == 0);
 
-	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_ROW_ARRAY_SIZE, (PTR)0x1, -6);
+	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_ROW_ARRAY_SIZE, (PTR)0x1, SQL_IS_INTEGER);
 	assert(ret == 0);
 
-	//ret = SQLBindCol(hStmt, 1, SQL_C_WCHAR, (PTR)data, /*SQLUINTEGER bufLength*/100, /*SQLUINTEGER * strLengthOrIndex*/&retCount);
-	//assert(ret == 0);
+	ret = SQLSetStmtAttrW(hStmt, SQL_ROWSET_SIZE, (PTR)0x2, SQL_IS_INTEGER);
+	assert(ret == 0);
+
+	ret = SQLGetStmtAttrW(hStmt, SQL_ROWSET_SIZE, data, SQL_IS_UINTEGER, NULL);
+	assert(ret == 0);
+	assert(*(SQLUINTEGER*)data == 2);
+
+	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_ROW_BIND_TYPE, (PTR)0x88, SQL_IS_INTEGER);
+	assert(ret == 0);
+
+	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_ROW_BIND_OFFSET_PTR, (PTR)data, SQL_IS_POINTER);
+	assert(ret == 0);
+
+	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_ROW_BIND_OFFSET_PTR, (PTR)0, SQL_IS_POINTER);
+	assert(ret == 0);
+
+	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_RETRIEVE_DATA, (PTR)0, SQL_IS_INTEGER);
+	assert(ret == 0);
+
+	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_RETRIEVE_DATA, (PTR)1, SQL_IS_INTEGER);
+	assert(ret == 0);
+
+
 	retCount = 0;
+	valInt = 0;
 	ret = SQLBindCol(hStmt, 1, SQL_C_SLONG, (PTR)&valInt, /*SQLUINTEGER bufLength*/4, /*SQLUINTEGER * strLengthOrIndex*/&retCount);
 	assert(ret == 0);
+	assert(valInt == 0);
 
-	ret = SQLFetch(hStmt);
+	ret = SQLFetch(hStmt); //valInt is a result of prev bindCol
 	assert(ret == 0);
-	//assert(retCount == 4);
 	assert(valInt == 3);
+
+
+	//row-wise binding
+	ret = SQLPrepareW(hStmt2, (SQLWCHAR*)sql.c_str(),sql.size());
+	assert(ret == 0);
+	ret = SQLExecute(hStmt2);
+	assert(ret == 0);
+	ret = SQLSetStmtAttrW(hStmt2, SQL_ATTR_ROW_BIND_OFFSET_PTR, (PTR)data2, SQL_IS_POINTER);
+	assert(ret == 0);
+	ret = SQLBindCol(hStmt2, 1, SQL_C_SLONG, (PTR)0x4, /*SQLUINTEGER bufLength*/4, /*SQLUINTEGER * strLengthOrIndex*/(SQLINTEGER *)(0x8));
+	assert(ret == 0);
+	ret = SQLFetch(hStmt2); //valInt is a result of prev bindCol
+	assert(ret == 0);
+	assert(*(SQLINTEGER*)(data2+0x4) == 3);
+
 
 	ret = SQLGetData(hStmt, 1, SQL_C_SLONG, (PTR)&valInt, /*SQLUINTEGER bufLength*/4, /*SQLUINTEGER * strLengthOrIndex*/&retCount);
 	assert(ret == 0);
@@ -626,7 +686,6 @@ void test_attributes_3(SQLHANDLE hStmt){
 	ret = SQLDescribeColW(hStmt, 6, NULL, 0, NULL, &dataType, &colSize, &decimalDigits, &nullable);
 	assert(ret == 0);
 	assert(dataType == SQL_WVARCHAR);
-	printf("asdfafafasff %d\n",colSize);
 	assert(colSize == 0);
 	assert(decimalDigits == 0);
 	assert(nullable == 1);
@@ -750,6 +809,11 @@ void test_attributes(SQLHANDLE hStmt){
 	assert(bufLength == 0);
 	assert(numberValue == 0);
 
+	ret = SQLColAttributeW(hStmt, 1, SQL_DESC_BASE_TABLE_NAME, data, 1024, &bufLength, NULL);
+	assert(ret == 0);
+	assert(bufLength == 0);
+	assert(numberValue == 0);
+
 	ret = SQLColAttributeW(hStmt, 1, SQL_DESC_CATALOG_NAME, data, 1024, &bufLength, &numberValue);
 	assert(ret == 0);
 	assert(bufLength == 0);
@@ -761,9 +825,11 @@ void test_attributes(SQLHANDLE hStmt){
 	assert(numberValue == 0);
 
 	ret = SQLColAttributeW(hStmt, 1, 1212, data, 1024, &bufLength, &numberValue);
-	//assert(ret == -1);
 	assert(ret == 0);
-	//assert(bufLength == 0);
+	assert(numberValue == 0);
+
+	ret = SQLColAttributeW(hStmt, 1, 1212, NULL,0,NULL, &numberValue);
+	assert(ret == 0);
 	assert(numberValue == 0);
 
 	ret = SQLColAttributeW(hStmt, 1, SQL_COLUMN_TABLE_NAME, data, 1024, &bufLength, &numberValue);
@@ -774,6 +840,10 @@ void test_attributes(SQLHANDLE hStmt){
 	ret = SQLColAttributeW(hStmt, 1, SQL_DESC_AUTO_UNIQUE_VALUE, NULL, 0, &bufLength, &numberValue);
 	assert(ret == 0);
 	assert(bufLength == 0);
+	assert(numberValue == 0);
+
+	ret = SQLColAttributeW(hStmt, 1, SQL_DESC_AUTO_UNIQUE_VALUE, NULL, 0, NULL, &numberValue);
+	assert(ret == 0);
 	assert(numberValue == 0);
 
 

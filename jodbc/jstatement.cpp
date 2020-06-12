@@ -277,6 +277,9 @@ RETCODE JStatement::getStatementAttr(SQLINTEGER	fAttribute, PTR		rgbValue, SQLIN
 			if(stringLength)
 				*stringLength = 0;
 			break;
+		case SQL_ROWSET_SIZE:
+			ret = jarrayToLong(env,data,0,(SQLINTEGER*)rgbValue, NULL,0,NULL);
+			break;
 		case SQL_ATTR_IMP_PARAM_DESC:
 		case SQL_ATTR_APP_PARAM_DESC:
 		case SQL_ATTR_APP_ROW_DESC:

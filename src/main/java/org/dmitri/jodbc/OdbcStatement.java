@@ -37,9 +37,13 @@ public class OdbcStatement {
 	private OdbcImpDescriptor impDescriptor = null; 
 	
 	
-	private Long bindDataSize;//size of wide-arrow element.  https://docs.microsoft.com/en-us/sql/odbc/reference/develop-app/binding-arrays-of-parameters?view=sql-server-ver15
+	private Long bindDataRowSize;//size of wide-arrow element.  https://docs.microsoft.com/en-us/sql/odbc/reference/develop-app/binding-arrays-of-parameters?view=sql-server-ver15
+	private Long bindDataRowSize2; // SQL_BIND_TYPE
+	private Long bindDataArraySize;//SQL_ATTR_ROW_ARRAY_SIZE
 	private Long statementQueryTimeout;
-	private Long bindDataOffset;
+	private Long bindDataOffset;//SQL_ATTR_ROW_BIND_OFFSET_PTR
+	private Long sqlRowSetSize; //SQL_ROWSET_SIZE same as SQL_ATTR_ROW_ARRAY_SIZE
+	
 	
 	public OdbcStatement(OdbcDatabase database,long statementId) {
 		this.database=database;
@@ -265,12 +269,15 @@ public class OdbcStatement {
 		case SQL_CONCURRENCY:
 			return new Object[] { Long.valueOf(1) };// SQL_CONCUR_READ_ONLY
 		case SQL_ATTR_ROW_ARRAY_SIZE:
-			return new Object[] { Long.valueOf(statement.getFetchSize()) };
+			return new Object[] { bindDataArraySize };
 		case SQL_ATTR_APP_ROW_DESC:
 		case SQL_ATTR_APP_PARAM_DESC:
 		case SQL_ATTR_IMP_PARAM_DESC:
 		case SQL_ATTR_IMP_ROW_DESC:
 			return new Object[] { /*statementId*/0x100 };
+		case SQL_ROWSET_SIZE:
+			return new Object[] { sqlRowSetSize };
+			
 		default:
 			log.warn("UNDEFINED statement attibute:" + attr);
 			throw new RuntimeException("UNDEFINED statement attibute:" + attr);
@@ -290,17 +297,25 @@ public class OdbcStatement {
 			statementQueryTimeout = data;
 			break;
 		case SQL_ATTR_ROW_ARRAY_SIZE:
-			statement.setFetchSize((int) data);
-			// fetchSize = (int)data;
+			bindDataArraySize = data;
+			break;
+		case SQL_ATTR_ROW_BIND_OFFSET_PTR:
+			bindDataOffset = data;
 			break;
 		case SQL_ATTR_PARAM_BIND_TYPE:
-			this.bindDataSize = data;
+			this.bindDataRowSize = data;
+			break;
+		case SQL_BIND_TYPE:
+			this.bindDataRowSize2 = data;//same as prev?
 			break;
 			
 		case SQL_RETRIEVE_DATA:
 			break;
 		case SQL_SOPT_SS_HIDDEN_COLUMNS:
 		case SQL_SOPT_SS_NOBROWSETABLE:
+			break;
+		case SQL_ROWSET_SIZE:
+			sqlRowSetSize = data;
 			break;
 		default:
 			log.warn("setStatementAttribute NOT FOUND " + attr);
@@ -347,9 +362,19 @@ public class OdbcStatement {
 		for (int i = 0; i < paramCount; i++) {
 			BoundParameter parameter = bindParameters.get(i);
 			ret[offset] = Integer.valueOf(parameter.getType().getType());
-			ret[offset + 1] = Long.valueOf(parameter.getBuffer());
+			//row-wise binding
+			if(bindDataOffset!=null) {
+				ret[offset + 1] = Long.valueOf(bindDataOffset.longValue()+parameter.getBuffer());	
+			} else {
+				ret[offset + 1] = Long.valueOf(parameter.getBuffer());	
+			}
+				
 			ret[offset + 2] = Long.valueOf(parameter.getBufLen());
-			ret[offset + 3] = Long.valueOf(parameter.getRetBuffer());
+			if(bindDataOffset!=null) {
+				ret[offset + 3] = Long.valueOf(bindDataOffset.longValue()+parameter.getRetBuffer());	
+			} else {
+				ret[offset + 3] = Long.valueOf(parameter.getRetBuffer());	
+			}			
 			ret[offset + 4] = fetchColumn(result, parameter.getColumn(), parameter.getType());
 			offset += ELEMENTS_PER_PARAMETER;
 		}

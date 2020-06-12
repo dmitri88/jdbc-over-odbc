@@ -9,7 +9,7 @@
 #define SQL_SOPT_SS_HIDDEN_COLUMNS 1227
 #define SQL_SOPT_SS_NOBROWSETABLE 1228
 
-#define POINTER_VAL(p) (p!=NULL?(int(*p)):NULL)
+#define POINTER_VAL(p) ((p!=NULL && (unsigned long long)p>0x1000)?(int(*p)):NULL)
 
 extern "C" RETCODE SQL_API SQLAllocHandle(SQLSMALLINT HandleType, SQLHANDLE InputHandle, SQLHANDLE * OutputHandle);
 extern "C" RETCODE SQL_API SQLAllocStmt(HDBC hdbc, HSTMT *hstmt);
@@ -22,6 +22,7 @@ extern "C" RETCODE SQL_API SQLDisconnect(HDBC hdbc);
 extern "C" RETCODE SQL_API SQLDriverConnectW(HDBC hdbc, HWND hwnd, SQLWCHAR *szConnStrIn, SQLSMALLINT cbConnStrIn, SQLWCHAR *szConnStrOut, SQLSMALLINT cbConnStrOutMax, SQLSMALLINT *pcbConnStrOut, SQLUSMALLINT fDriverCompletion);
 extern "C" RETCODE SQL_API SQLExecDirectW(HSTMT hstm, SQLWCHAR * sql, SQLINTEGER length);
 extern "C" RETCODE SQL_API SQLExecute(SQLHSTMT hstm);
+extern "C" RETCODE SQL_API SQLExtendedFetch(SQLHSTMT hstmt, SQLUSMALLINT fFetchType, SQLLEN irow, SQLULEN *pcrow, SQLUSMALLINT *rgfRowStatus);
 extern "C" RETCODE SQL_API SQLFetch(HSTMT hstm);
 extern "C" RETCODE SQL_API SQLFetchScroll(HSTMT hstm, SQLSMALLINT fetchOrientation, SQLLEN fetchOffset);
 extern "C" RETCODE SQL_API SQLFreeHandle(SQLSMALLINT HandleType, SQLHANDLE Handle);
