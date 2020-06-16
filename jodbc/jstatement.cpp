@@ -439,6 +439,130 @@ RETCODE JStatement::fetch(){
 	return ret;
 }
 
+RETCODE JStatement::fetchscroll(SQLUSMALLINT fFetchType, SQLLEN irow){
+	int ret;
+	std::function<int(JNIEnv* env,JStatement* statement,SQLUSMALLINT fFetchType, SQLLEN irow)> func1;
+	func1 = [](JNIEnv *env,JStatement* statement,SQLUSMALLINT fFetchType, SQLLEN irow) {
+		int ret = SQL_SUCCESS;
+		jobject val;
+		jlong stmt = (long long)statement;
+		jmethodID method = env->GetMethodID(statement->connection->entrypointClass, "fetchScroll", "(JII)[Ljava/lang/Object;");
+		jobjectArray data = (jobjectArray)env->CallObjectMethod(statement->connection->entrypointObj, method, stmt,fFetchType,irow);
+		if(env->ExceptionCheck()){
+			env->ExceptionDescribe();
+			LOG(1,"Error: JStatement::fetchscroll");
+			return SQL_ERROR;
+		}
+		jint fetchRet;
+		jint paramCount;
+		jint rowCount;
+		jlong statusPtr;
+		jlong numRowPtr;
+		SQLUSMALLINT*   rowStatusArray;
+		SQLULEN *pcrow;
+
+		printf("asdasdasd %d\n",fetchRet);
+		ret = jarrayToInt(env,data,0,&fetchRet);
+		if(ret)
+			return ret;
+		if(!SQL_SUCCEEDED(fetchRet))
+			return fetchRet;
+
+		jsize arraySize = env->GetArrayLength(data);
+		int totalRows = (arraySize-5)/6;
+
+		ret = jarrayToInt(env,data,2,&rowCount);
+		if(ret)
+			return ret;
+		ret = jarrayToLong(env,data,4,&numRowPtr);
+		if(ret)
+			return ret;
+
+		pcrow = (SQLULEN *)numRowPtr;
+		*pcrow = rowCount;
+
+		if(rowCount == 0)
+			return ret;//success
+
+		ret = jarrayToInt(env,data,1,&paramCount);
+
+		if(ret)
+			return ret;
+		if(paramCount == 0)
+			return ret;
+
+		ret = jarrayToInt(env,data,2,&rowCount);
+		if(ret)
+			return ret;
+		if(rowCount == 0)
+			return ret;
+
+		ret = jarrayToLong(env,data,3,&statusPtr);
+		if(ret)
+			return ret;
+		rowStatusArray = (SQLUSMALLINT *)statusPtr;
+
+		int offset = 5;
+		int elementInRow = 6;
+
+		for(int i=0;i<totalRows;i++){
+			rowStatusArray[i] = SQL_ROW_NOROW;
+		}
+
+		for(int row=0;row<rowCount;row++){
+			for(int i=0;i<paramCount;i++){
+				int baseOffset = offset+elementInRow*(row*paramCount+i);
+				SQLSMALLINT type;
+				PTR valuePtr;
+				SQLUINTEGER bufLength;
+				SQLUINTEGER * strLengthOrIndex;
+				SQLINTEGER rowStatus;
+
+				jarrayToShort(env, data, baseOffset, &type);
+				jarrayToLong(env, data, baseOffset+1, (jlong*)&valuePtr);
+				jarrayToLong(env, data, baseOffset+2, (jlong*)&bufLength);
+				jarrayToLong(env, data, baseOffset+3, (jlong*)&strLengthOrIndex);
+				jobject val=(jobject) env->GetObjectArrayElement(data, baseOffset+4);
+				jarrayToLong(env, data, baseOffset+5, (jlong*)&rowStatus);
+				rowStatusArray[row] = rowStatus;
+
+				ret = bindResultToVariable(env, val, type, valuePtr,bufLength, strLengthOrIndex);
+				if(env->ExceptionCheck()){
+					env->ExceptionDescribe();
+					LOG(1,"Error: JStatement::fetchscroll");
+					return SQL_ERROR;
+				}
+				LOG(5, "fetch param (%d,%d,%d,%p,%li,%p)\n",row,i,type,valuePtr,bufLength,strLengthOrIndex);
+			}
+		}
+
+
+
+//		for(int i=0;i<paramCount;i++){
+//			SQLSMALLINT type;
+//			PTR valuePtr;
+//			SQLUINTEGER bufLength;
+//			SQLUINTEGER * strLengthOrIndex;
+//			jarrayToShort(env, data, 2+5*i, &type);
+//			jarrayToLong(env, data, 2+5*i+1, (jlong*)&valuePtr);
+//			jarrayToLong(env, data, 2+5*i+2, (jlong*)&bufLength);
+//			jarrayToLong(env, data, 2+5*i+3, (jlong*)&strLengthOrIndex);
+//			jobject val=(jobject) env->GetObjectArrayElement(data, 2+5*i+4);
+//			ret = bindResultToVariable(env, val, type, valuePtr,bufLength, strLengthOrIndex);
+//			if(env->ExceptionCheck()){
+//				env->ExceptionDescribe();
+//				LOG(1,"Error: JStatement::fetch");
+//				return SQL_ERROR;
+//			}
+//			LOG(5, "fetch param (%d,%d,%p,%li,%p)\n",i,type,valuePtr,bufLength,strLengthOrIndex);
+//		}
+
+		return ret;
+	};
+	ret = java_callback(func1,this,fFetchType,irow);
+	return ret;
+}
+
 RETCODE JStatement::moreResults(){
 	int ret;
 	std::function<int(JNIEnv* env,JStatement* statement)> func1;

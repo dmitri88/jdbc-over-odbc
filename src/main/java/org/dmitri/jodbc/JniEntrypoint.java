@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import org.dmitri.jodbc.enums.OdbcBindType;
+import org.dmitri.jodbc.enums.OdbcFetchScrollType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -187,6 +188,15 @@ public class JniEntrypoint {
 		}
 		return stmt.fetch();
 	}
+	
+	public Object[] fetchScroll(long stmtId, int type, int row) {
+		OdbcStatement stmt = database.getStatement(stmtId);
+		if(stmt == null) {
+			log.error("statement not found {}",stmtId);
+			throw new RuntimeException("statement not found "+ stmtId);
+		}
+		return stmt.fetchScroll(OdbcFetchScrollType.valueOf(type),row);
+	}	
 	
 	public int moreResults(long stmtId) {
 		OdbcStatement stmt = database.getStatement(stmtId);

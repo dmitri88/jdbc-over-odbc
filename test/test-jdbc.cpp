@@ -465,11 +465,7 @@ void test_queries(SQLHANDLE hDbc){
 	SQLHANDLE hStmt2;
 	SQLSMALLINT smallInt;
 	char data[1024];
-	char data2[1024];
 	char retdata[1024];
-
-	ret = SQLAllocStmt(hDbc, &hStmt2);
-	assert(ret == 0);
 
 	ret = SQLAllocHandle( SQL_HANDLE_STMT, hDbc, &hStmt);
 	assert(ret == 0);
@@ -527,20 +523,6 @@ void test_queries(SQLHANDLE hDbc){
 	assert(valInt == 3);
 
 
-	//row-wise binding
-	ret = SQLPrepareW(hStmt2, (SQLWCHAR*)sql.c_str(),sql.size());
-	assert(ret == 0);
-	ret = SQLExecute(hStmt2);
-	assert(ret == 0);
-	ret = SQLSetStmtAttrW(hStmt2, SQL_ATTR_ROW_BIND_OFFSET_PTR, (PTR)data2, SQL_IS_POINTER);
-	assert(ret == 0);
-	ret = SQLBindCol(hStmt2, 1, SQL_C_SLONG, (PTR)0x4, /*SQLUINTEGER bufLength*/4, /*SQLUINTEGER * strLengthOrIndex*/(SQLINTEGER *)(0x8));
-	assert(ret == 0);
-	ret = SQLFetch(hStmt2); //valInt is a result of prev bindCol
-	assert(ret == 0);
-	assert(*(SQLINTEGER*)(data2+0x4) == 3);
-
-
 	ret = SQLGetData(hStmt, 1, SQL_C_SLONG, (PTR)&valInt, /*SQLUINTEGER bufLength*/4, /*SQLUINTEGER * strLengthOrIndex*/&retCount);
 	assert(ret == 0);
 	assert(valInt == 3);
@@ -566,6 +548,49 @@ void test_queries(SQLHANDLE hDbc){
 	ret = SQLNumResultCols (hStmt, &smallInt);
 	assert(ret == 0);
 	assert(smallInt == 23);
+
+}
+void test_queries_row_binding(SQLHANDLE hDbc){
+	int ret;
+	SQLINTEGER valInt;
+	SQLINTEGER retCount;
+	SQLHANDLE hStmt;
+	SQLSMALLINT smallInt;
+	char data[1024];
+	char retdata[1024];
+
+	SQLULEN rows;
+	SQLUSMALLINT statuses[200];
+
+	ret = SQLAllocStmt(hDbc, &hStmt);
+	assert(ret == 0);
+
+	ustring sql = ustring(L"SELECT COUNT(*) AS RecordCount FROM t_package");
+	ret = SQLPrepareW(hStmt, (SQLWCHAR*)sql.c_str(),sql.size());
+	assert(ret == 0);
+
+	ret = SQLExecute(hStmt);
+	assert(ret == 0);
+
+	ret = SQLSetStmtAttrW(hStmt, SQL_ATTR_ROW_BIND_OFFSET_PTR, (PTR)data, SQL_IS_POINTER);
+	assert(ret == 0);
+
+	ret = SQLSetStmtAttrW(hStmt, SQL_ROWSET_SIZE, (PTR)1, SQL_IS_INTEGER);
+	assert(ret == 0);
+
+	ret = SQLBindCol(hStmt, 1, SQL_C_SLONG, (PTR)0x4, /*SQLUINTEGER bufLength*/4, /*SQLUINTEGER * strLengthOrIndex*/(SQLINTEGER *)(0x8));
+	assert(ret == 0);
+
+	rows=-1;
+	statuses[0]=-1;
+	ret = SQLExtendedFetch(hStmt, SQL_FETCH_NEXT, /*irow*/0, &rows, statuses);
+	assert(ret == 0);
+	assert(rows == 1);
+	assert(statuses[0] == SQL_ROW_SUCCESS);
+	assert(*(SQLINTEGER*)(data+0x4) == 3);
+
+	ret = SQLExtendedFetch(hStmt, SQL_FETCH_NEXT, /*irow*/0, &rows, statuses);
+	assert(ret == 100);
 
 }
 
@@ -928,6 +953,7 @@ int main(int argc, char **argv) {
 	test_attributes(hStmt);
 	test_attributes_3(hStmt);
 	test_queries(hDbc);
+	test_queries_row_binding(hDbc);
 	test_imp(hDbc);
 
 	printf("\ntesting-done\n");

@@ -669,8 +669,17 @@ RETCODE	SQL_API SQLBindCol(HSTMT hstmt, SQLUSMALLINT column, SQLSMALLINT type, P
 }
 
 RETCODE SQL_API SQLExtendedFetch(SQLHSTMT hstmt, SQLUSMALLINT fFetchType, SQLLEN irow, SQLULEN *pcrow, SQLUSMALLINT *rgfRowStatus){
-	LOG(5, "Entering SQLExtendedFetch (%p)\n",hstmt);
-	return SQL_ERROR;
+	LOG(5, "Entering SQLExtendedFetch (%p,%d,%lu,%p,%p)\n",hstmt,fFetchType,irow,pcrow,rgfRowStatus);
+	/*
+	** Bind an array of status pointers to report on the status of
+	** each row fetched.
+	*/
+	SQLSetStmtAttrW( hstmt, SQL_ATTR_ROW_STATUS_PTR,(SQLPOINTER)rgfRowStatus, 0 );
+	/*
+	** Bind an integer that reports the number of rows fetched.
+	*/
+	SQLSetStmtAttrW( hstmt, SQL_ATTR_ROWS_FETCHED_PTR,(SQLPOINTER)pcrow, 0 );
+	return SQLFetchScroll(hstmt, fFetchType, irow);
 }
 
 RETCODE SQL_API SQLFetch(HSTMT hstmt) {
@@ -694,8 +703,7 @@ RETCODE SQL_API SQLFetchScroll(HSTMT hstm, SQLSMALLINT fetchOrientation, SQLLEN 
 		return SQL_INVALID_HANDLE;
 	JStatement* stmt = (JStatement*)hstm;
 
-	//ret = stmt->fetch();
-	ret= SQL_ERROR;
+	ret = stmt->fetchscroll(fetchOrientation,fetchOffset);
 	LOG(5, "Exiting SQLFetchScroll %d (%p)\n",ret,hstm);
 	return ret;
 }
