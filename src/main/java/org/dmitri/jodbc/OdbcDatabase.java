@@ -86,7 +86,7 @@ public class OdbcDatabase {
 	}
 
 	public void createStatement(long stmtId) {
-		log.debug("JAVA createStatement " + stmtId);
+		log.debug("JAVA createStatement " + Utils.toHex(stmtId));
 		statements.put(stmtId, new OdbcStatement(this, stmtId));
 	}
 

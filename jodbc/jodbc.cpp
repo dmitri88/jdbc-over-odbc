@@ -674,12 +674,22 @@ RETCODE SQL_API SQLExtendedFetch(SQLHSTMT hstmt, SQLUSMALLINT fFetchType, SQLLEN
 	** Bind an array of status pointers to report on the status of
 	** each row fetched.
 	*/
-	SQLSetStmtAttrW( hstmt, SQL_ATTR_ROW_STATUS_PTR,(SQLPOINTER)rgfRowStatus, 0 );
+	RETCODE	ret;
+	JStatement* stmt = (JStatement*)hstmt;
+	ret = stmt->setStatementAttr(SQL_ATTR_ROW_STATUS_PTR,(SQLPOINTER)rgfRowStatus, 0);
+	if(ret){
+		LOG(1, "Failed setStatementAttr (%p)\n",hstmt);
+		return ret;
+	}
 	/*
 	** Bind an integer that reports the number of rows fetched.
 	*/
-	SQLSetStmtAttrW( hstmt, SQL_ATTR_ROWS_FETCHED_PTR,(SQLPOINTER)pcrow, 0 );
-	return SQLFetchScroll(hstmt, fFetchType, irow);
+	ret = stmt->setStatementAttr(SQL_ATTR_ROWS_FETCHED_PTR,(SQLPOINTER)pcrow, 0);
+	if(ret){
+		LOG(1, "Failed setStatementAttr (%p)\n",hstmt);
+		return ret;
+	}
+	return stmt->fetchscroll(fFetchType,irow);
 }
 
 RETCODE SQL_API SQLFetch(HSTMT hstmt) {

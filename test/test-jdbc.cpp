@@ -588,6 +588,7 @@ void test_queries_row_binding(SQLHANDLE hDbc){
 	assert(rows == 1);
 	assert(statuses[0] == SQL_ROW_SUCCESS);
 	assert(*(SQLINTEGER*)(data+0x4) == 3);
+	assert(*(SQLINTEGER*)(data+0x8) == 0);
 
 	ret = SQLExtendedFetch(hStmt, SQL_FETCH_NEXT, /*irow*/0, &rows, statuses);
 	assert(ret == 100);

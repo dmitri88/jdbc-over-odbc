@@ -461,7 +461,6 @@ RETCODE JStatement::fetchscroll(SQLUSMALLINT fFetchType, SQLLEN irow){
 		SQLUSMALLINT*   rowStatusArray;
 		SQLULEN *pcrow;
 
-		printf("asdasdasd %d\n",fetchRet);
 		ret = jarrayToInt(env,data,0,&fetchRet);
 		if(ret)
 			return ret;
